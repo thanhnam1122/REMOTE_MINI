@@ -1,27 +1,21 @@
 @echo off
 chcp 65001 > nul
 echo ========================================================
-echo   COMPILING SERVER WINFORMS (.NET / C#)
+echo   BIEN DICH STAGE: REMOTE DESKTOP SERVER (WPF .NET 8)
 echo ========================================================
 echo.
 
-cd /d "%~dp0Server_WinForms"
+cd /d "%~dp0"
 
-set CSC_PATH="C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\Roslyn\csc.exe"
+dotnet build Server_WPF\RemoteDesktopServer.csproj --configuration Debug --nologo
 
-if not exist %CSC_PATH% (
-    set CSC_PATH="C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [LOI] Bien dich WPF Server THAT BAI!
+    pause
+    exit /b 1
 )
 
-echo Dang bien dich voi C# Compiler at: %CSC_PATH%
-%CSC_PATH% /target:winexe /out:RemoteDesktopServer.exe /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Core.dll Program.cs MainForm.cs MainForm.Designer.cs Models\PacketProtocol.cs Services\TcpServerService.cs Helpers\CoordinateMapper.cs
-
-if %ERRORLEVEL% EQU 0 (
-    echo.
-    echo [THANH CONG] Da bien dich thanh cong RemoteDesktopServer.exe!
-) else (
-    echo.
-    echo [LOI] Bien dich that bai! Vui long kiem tra lai moi truong.
-)
-
+echo.
+echo [THANH CONG] Da bien dich xong WPF Server!
 pause

@@ -1,16 +1,14 @@
 @echo off
 chcp 65001 > nul
 echo ========================================================
-echo   KHOI CHAY REMOTE DESKTOP SERVER (MAY DIEU KHIEN)
+echo   KHOI CHAY REMOTE DESKTOP SERVER (WPF .NET 8)
 echo ========================================================
 echo.
 
-cd /d "%~dp0Server_WinForms"
+cd /d "%~dp0"
 
-if not exist "RemoteDesktopServer.exe" (
-    echo Dang bien dich Server...
-    call ..\build_server.bat
+if exist "Server_WPF\bin\Debug\net8.0-windows\RemoteDesktopServer.exe" (
+    start "" "Server_WPF\bin\Debug\net8.0-windows\RemoteDesktopServer.exe"
+) else (
+    dotnet run --project Server_WPF\RemoteDesktopServer.csproj
 )
-
-start "" "RemoteDesktopServer.exe"
-echo Server da duoc khoi chay!
