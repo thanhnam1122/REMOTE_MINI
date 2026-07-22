@@ -26,7 +26,7 @@ namespace RemoteDesktopServer
 
         private WriteableBitmap? _screenBitmap;
         private int _isRenderPending = 0;
-        private List<TileEntry>? _latestTiles;
+        private List<DecodedTile>? _latestTiles;
         private ushort _latestOrigW;
         private ushort _latestOrigH;
         private int _latestFrameSize;
@@ -120,7 +120,20 @@ namespace RemoteDesktopServer
 
         private void ServerService_OnTileFrameReceived(List<TileEntry> tiles, ushort origW, ushort origH, int frameSize)
         {
-            _latestTiles = tiles;
+            var decodedTiles = new List<DecodedTile>(tiles.Count);
+            foreach (TileEntry tile in tiles)
+            {
+                BitmapSource? pixels = DecodeTileJpeg(tile.JpegBytes);
+                if (pixels == null)
+                    continue;
+
+                decodedTiles.Add(new DecodedTile(tile.X, tile.Y, tile.Width, tile.Height, pixels));
+            }
+
+            if (decodedTiles.Count == 0)
+                return;
+
+            _latestTiles = decodedTiles;
             _latestOrigW = origW;
             _latestOrigH = origH;
             _latestFrameSize = frameSize;
@@ -145,7 +158,7 @@ namespace RemoteDesktopServer
             }
         }
 
-        private void RenderTileDeltaFrame(List<TileEntry> tiles, ushort origW, ushort origH, int frameSize)
+        private void RenderTileDeltaFrame(List<DecodedTile> tiles, ushort origW, ushort origH, int frameSize)
         {
             _remoteWidth = origW;
             _remoteHeight = origH;
@@ -178,25 +191,21 @@ namespace RemoteDesktopServer
             _screenBitmap.Lock();
             try
             {
-                foreach (var tile in tiles)
+                foreach (DecodedTile tile in tiles)
                 {
-                    BitmapSource? tileSource = DecodeTileJpeg(tile.JpegBytes);
-                    if (tileSource == null) continue;
-
-                    FormatConvertedBitmap converted = new FormatConvertedBitmap(tileSource, PixelFormats.Bgra32, null, 0);
                     int destinationStride = _screenBitmap.BackBufferStride;
                     int destinationOffset = (tile.Y * destinationStride) + (tile.X * 4);
                     IntPtr destination = IntPtr.Add(_screenBitmap.BackBuffer, destinationOffset);
                     int destinationBufferSize = ((tile.Height - 1) * destinationStride) + (tile.Width * 4);
 
-                    converted.CopyPixels(
+                    tile.Pixels.CopyPixels(
                         new Int32Rect(0, 0, tile.Width, tile.Height),
                         destination,
                         destinationBufferSize,
                         destinationStride);
-                }
 
-                _screenBitmap.AddDirtyRect(new Int32Rect(0, 0, _screenBitmap.PixelWidth, _screenBitmap.PixelHeight));
+                    _screenBitmap.AddDirtyRect(new Int32Rect(tile.X, tile.Y, tile.Width, tile.Height));
+                }
             }
             finally
             {
@@ -215,11 +224,39 @@ namespace RemoteDesktopServer
                 bitmap.StreamSource = ms;
                 bitmap.EndInit();
                 bitmap.Freeze();
-                return bitmap;
+
+                if (bitmap.Format == PixelFormats.Bgra32)
+                    return bitmap;
+
+                FormatConvertedBitmap converted = new FormatConvertedBitmap(
+                    bitmap,
+                    PixelFormats.Bgra32,
+                    null,
+                    0);
+                converted.Freeze();
+                return converted;
             }
             catch
             {
                 return null;
+            }
+        }
+
+        private sealed class DecodedTile
+        {
+            public ushort X { get; }
+            public ushort Y { get; }
+            public ushort Width { get; }
+            public ushort Height { get; }
+            public BitmapSource Pixels { get; }
+
+            public DecodedTile(ushort x, ushort y, ushort width, ushort height, BitmapSource pixels)
+            {
+                X = x;
+                Y = y;
+                Width = width;
+                Height = height;
+                Pixels = pixels;
             }
         }
 
