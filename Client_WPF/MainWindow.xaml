@@ -1,260 +1,307 @@
 <Window x:Class="RemoteDesktopClient.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Remote Desktop Mini - WPF Client"
-        Height="720" Width="1100"
-        MinHeight="650" MinWidth="950"
+        Title="Remote Mini · Chia sẻ màn hình"
+        Width="1220" Height="820"
+        MinWidth="1040" MinHeight="700"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BgDarkBrush}"
-        Foreground="{StaticResource TextPrimaryBrush}">
+        Background="{DynamicResource AppBackgroundBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
 
-    <Window.Resources>
-        <!-- Custom Button Style -->
-        <Style x:Key="ModernButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="16,10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#374151"/>
-                                <Setter Property="Foreground" Value="#9CA3AF"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Custom TextBox Style -->
-        <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="#11131F"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderDarkBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Metric Card Label Style -->
-        <Style x:Key="MetricTitleStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
-        </Style>
-        <Style x:Key="MetricValueStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="20"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-        </Style>
-    </Window.Resources>
-
-    <Grid Margin="20">
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="76"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header Panel -->
-        <Border Grid.Row="0" Background="{StaticResource CardDarkBrush}" CornerRadius="10" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" Padding="20,16" Margin="0,0,0,16">
-            <Grid>
+        <!-- Product bar -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid Margin="24,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⚡ REMOTE DESKTOP MINI" FontSize="20" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-                        <Border Background="#2563EB" CornerRadius="10" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="WPF NATIVE CLIENT" FontSize="10" FontWeight="Bold" Foreground="White"/>
-                        </Border>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Grid Width="42" Height="42" Margin="0,0,13,0">
+                        <Border Background="{DynamicResource BrandGradientBrush}" CornerRadius="13"/>
+                        <Path Data="M1,1 L25,1 L25,17 L1,17 Z M8,22 L18,22 M13,17 L13,22"
+                              Width="26"
+                              Height="23"
+                              Stroke="{DynamicResource OnAccentBrush}"
+                              StrokeThickness="2"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"/>
+                    </Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="REMOTE MINI" FontFamily="Segoe UI Semibold" FontSize="16"/>
+                        <TextBlock Text="Chia sẻ màn hình an toàn" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <TextBlock Text="Máy bị điều khiển (Client) - Truyền luồng ảnh nén JPEG &amp; Nhận thao tác điều khiển" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                    <Border Background="{DynamicResource AccentSoftBrush}"
+                            CornerRadius="6"
+                            Padding="7,3"
+                            Margin="14,0,0,0"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="SHARE" Style="{StaticResource SectionEyebrowStyle}" FontSize="9"/>
+                    </Border>
                 </StackPanel>
 
-                <!-- Status Pill -->
-                <Border Grid.Column="1" x:Name="borderStatusPill" Background="#1F2937" CornerRadius="20" Padding="14,6" VerticalAlignment="Center" BorderBrush="#374151" BorderThickness="1">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="ellipseStatus" Width="10" Height="10" Fill="#EF4444" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="txtStatus" Text="Đã ngắt kết nối" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border x:Name="borderStatusPill"
+                            Background="{DynamicResource DangerSoftBrush}"
+                            BorderBrush="{DynamicResource DangerBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="18"
+                            Padding="12,7"
+                            Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="ellipseStatus"
+                                     Width="8" Height="8"
+                                     Fill="{DynamicResource DangerBrush}"
+                                     Margin="0,0,8,0"
+                                     VerticalAlignment="Center"/>
+                            <TextBlock x:Name="txtStatus"
+                                       Text="Chưa kết nối"
+                                       FontFamily="Segoe UI Semibold"
+                                       FontSize="11"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Button x:Name="btnToggleTheme"
+                            Content="Sáng"
+                            Width="68"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Click="BtnToggleTheme_Click"
+                            ToolTip="Chuyển giao diện sáng hoặc tối"/>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Main Body Grid (2 Columns) -->
-        <Grid Grid.Row="1">
+        <!-- Workspace -->
+        <Grid Grid.Row="1" Margin="22">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="396"/>
+                <ColumnDefinition Width="16"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left Column: Controls & Metrics -->
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,16,0">
-                <StackPanel Orientation="Vertical">
-                    <!-- Connection Config Card -->
-                    <Border Background="{StaticResource CardDarkBrush}" CornerRadius="10" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" Padding="18" Margin="0,0,0,14">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="CẤU HÌNH KẾT NỐI SERVER" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,14"/>
+            <!-- Connection and capture controls -->
+            <ScrollViewer Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="16"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                            <TextBlock Text="Địa chỉ IP Server:" FontSize="12" Foreground="White" Margin="0,0,0,4"/>
-                            <TextBox x:Name="txtIp" Text="127.0.0.1" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,10"/>
-
-                            <Grid Margin="0,0,0,14">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Cổng (Port):" FontSize="12" Foreground="White" Margin="0,0,0,4"/>
-                                    <TextBox x:Name="txtPort" Text="8888" Style="{StaticResource ModernTextBoxStyle}"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Mã PIN Xác Thực:" FontSize="12" Foreground="White" Margin="0,0,0,4"/>
-                                    <TextBox x:Name="txtPin" Text="1234" Style="{StaticResource ModernTextBoxStyle}"/>
-                                </StackPanel>
+                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="22">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Width="58" Height="58" Margin="0,0,14,0">
+                                <Border Background="{DynamicResource AccentSoftBrush}" CornerRadius="18"/>
+                                <Path Data="M17,28 C17,22 21,18 27,18 L38,18 M41,28 C41,34 37,38 31,38 L20,38 M24,23 L18,29 L24,35 M34,23 L40,29 L34,35"
+                                      Stroke="{DynamicResource AccentBrush}"
+                                      StrokeThickness="2.2"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"/>
                             </Grid>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="KẾT NỐI MÁY ĐIỀU KHIỂN" Style="{StaticResource SectionEyebrowStyle}"/>
+                                <TextBlock Text="Bắt đầu phiên hỗ trợ" Style="{StaticResource CardTitleStyle}" FontSize="23" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="Nhập thông tin do người hỗ trợ cung cấp. Màn hình chỉ được truyền khi phiên kết nối thành công."
+                                   Style="{StaticResource BodyTextStyle}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,16"/>
 
-                            <Button x:Name="btnConnect" Content="🚀 Bắt đầu Kết nối Server" Style="{StaticResource ModernButtonStyle}" Click="BtnConnect_Click"/>
+                        <TextBlock Text="ĐỊA CHỈ IP MÁY CHỦ" Style="{StaticResource InputLabelStyle}"/>
+                        <TextBox x:Name="txtIp" Text="127.0.0.1" Style="{StaticResource TextInputStyle}" Margin="0,0,0,12"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="CỔNG" Style="{StaticResource InputLabelStyle}"/>
+                                <TextBox x:Name="txtPort" Text="8888" Style="{StaticResource TextInputStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="MÃ PIN" Style="{StaticResource InputLabelStyle}"/>
+                                <TextBox x:Name="txtPin" Text="1234" Style="{StaticResource TextInputStyle}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Button x:Name="btnConnect"
+                                Content="Kết nối và chia sẻ"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="0,16,0,0"
+                                Click="BtnConnect_Click"/>
+
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="20" MinHeight="238">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="CHẤT LƯỢNG CHIA SẺ" Style="{StaticResource SectionEyebrowStyle}"/>
+                            <TextBlock Text="Điều chỉnh trước hoặc trong phiên" Style="{StaticResource BodyTextStyle}" Margin="0,3,0,0"/>
                         </StackPanel>
-                    </Border>
 
-                    <!-- Realtime Dashboard Card -->
-                    <Border Background="{StaticResource CardDarkBrush}" CornerRadius="10" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" Padding="18" Margin="0,0,0,14">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="THÔNG SỐ TRUYỀN TẢI THỜI GIAN THỰC" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,14"/>
+                        <Grid Grid.Row="1" Margin="0,16,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                            <UniformGrid Columns="2" Rows="2">
-                                <!-- FPS -->
-                                <Border Background="#11131F" CornerRadius="8" Padding="12" Margin="0,0,6,12" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
-                                    <StackPanel>
-                                        <TextBlock Text="TỐC ĐỘ KHUNG HÌNH" Style="{StaticResource MetricTitleStyle}"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock x:Name="txtFps" Text="0.0" Style="{StaticResource MetricValueStyle}" Foreground="#10B981"/>
-                                            <TextBlock Text=" FPS" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="4,0,0,3"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
+                            <StackPanel Grid.Row="0">
+                                <Grid>
+                                    <TextBlock Text="Chất lượng JPEG" Style="{StaticResource InputLabelStyle}"/>
+                                    <TextBlock x:Name="txtQualityVal" Text="55%" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe UI Semibold" FontSize="11"/>
+                                </Grid>
+                                <Slider x:Name="sldQuality" Minimum="10" Maximum="100" Value="55" TickFrequency="5" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldQuality_ValueChanged"/>
+                            </StackPanel>
 
-                                <!-- Bandwidth -->
-                                <Border Background="#11131F" CornerRadius="8" Padding="12" Margin="6,0,0,12" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
-                                    <StackPanel>
-                                        <TextBlock Text="BĂNG THÔNG GỬI" Style="{StaticResource MetricTitleStyle}"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock x:Name="txtBandwidth" Text="0.0" Style="{StaticResource MetricValueStyle}" Foreground="#3B82F6"/>
-                                            <TextBlock Text=" KB/s" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="4,0,0,3"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
+                            <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                                <Grid>
+                                    <TextBlock Text="Tỉ lệ khung hình" Style="{StaticResource InputLabelStyle}"/>
+                                    <TextBlock x:Name="txtScaleVal" Text="0.50x" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe UI Semibold" FontSize="11"/>
+                                </Grid>
+                                <Slider x:Name="sldScale" Minimum="0.25" Maximum="1" Value="0.5" TickFrequency="0.05" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldScale_ValueChanged"/>
+                            </StackPanel>
 
-                                <!-- Resolution -->
-                                <Border Background="#11131F" CornerRadius="8" Padding="12" Margin="0,0,6,0" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
-                                    <StackPanel>
-                                        <TextBlock Text="ĐỘ PHÂN GIẢI GỐC" Style="{StaticResource MetricTitleStyle}"/>
-                                        <TextBlock x:Name="txtResolution" Text="1920x1080" Style="{StaticResource MetricValueStyle}" Foreground="#F59E0B" FontSize="16"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Total Bytes -->
-                                <Border Background="#11131F" CornerRadius="8" Padding="12" Margin="6,0,0,0" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
-                                    <StackPanel>
-                                        <TextBlock Text="TỔNG DỮ LIỆU" Style="{StaticResource MetricTitleStyle}"/>
-                                        <TextBlock x:Name="txtTotalData" Text="0 MB" Style="{StaticResource MetricValueStyle}" Foreground="#8B5CF6" FontSize="16"/>
-                                    </StackPanel>
-                                </Border>
-                            </UniformGrid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Stream Capture Settings Card -->
-                    <Border Background="{StaticResource CardDarkBrush}" CornerRadius="10" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" Padding="18">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="CẤU HÌNH NÉN &amp; CHỤP MÀN HÌNH" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,14"/>
-
-                            <!-- Quality Slider -->
-                            <Grid Margin="0,0,0,10">
-                                <TextBlock Text="Chất lượng JPEG (Quality):" FontSize="12" Foreground="White" HorizontalAlignment="Left"/>
-                                <TextBlock x:Name="txtQualityVal" Text="55%" FontSize="12" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Right"/>
-                            </Grid>
-                            <Slider x:Name="sldQuality" Minimum="10" Maximum="100" Value="55" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="SldQuality_ValueChanged" Margin="0,0,0,14"/>
-
-                            <!-- Scale Slider -->
-                            <Grid Margin="0,0,0,10">
-                                <TextBlock Text="Tỉ lệ thu nhỏ (Scale):" FontSize="12" Foreground="White" HorizontalAlignment="Left"/>
-                                <TextBlock x:Name="txtScaleVal" Text="0.50x" FontSize="12" FontWeight="Bold" Foreground="#3B82F6" HorizontalAlignment="Right"/>
-                            </Grid>
-                            <Slider x:Name="sldScale" Minimum="0.25" Maximum="1.0" Value="0.5" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="SldScale_ValueChanged" Margin="0,0,0,14"/>
-
-                            <!-- FPS Slider -->
-                            <Grid Margin="0,0,0,10">
-                                <TextBlock Text="Giới hạn FPS (FPS Limit):" FontSize="12" Foreground="White" HorizontalAlignment="Left"/>
-                                <TextBlock x:Name="txtFpsVal" Text="30 FPS" FontSize="12" FontWeight="Bold" Foreground="#F59E0B" HorizontalAlignment="Right"/>
-                            </Grid>
-                            <Slider x:Name="sldFps" Minimum="5" Maximum="60" Value="30" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="SldFps_ValueChanged"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+                            <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                                <Grid>
+                                    <TextBlock Text="Giới hạn FPS" Style="{StaticResource InputLabelStyle}"/>
+                                    <TextBlock x:Name="txtFpsVal" Text="60 FPS" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe UI Semibold" FontSize="11"/>
+                                </Grid>
+                                <Slider x:Name="sldFps" Minimum="5" Maximum="120" Value="60" TickFrequency="5" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldFps_ValueChanged"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
             </ScrollViewer>
 
-            <!-- Right Column: Console Log Window -->
-            <Border Grid.Column="1" Background="{StaticResource CardDarkBrush}" CornerRadius="10" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" Padding="18">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+            <!-- Telemetry and activity -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="190"/>
+                    <RowDefinition Height="16"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                            <TextBlock Text="💻 NHẬT KÝ HOẠT ĐỘNG (SYSTEM LOGS)" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </StackPanel>
-                        <Button Content="Xóa Logs" FontSize="11" Padding="8,4" Background="#374151" Foreground="White" HorizontalAlignment="Right" Click="BtnClearLog_Click" Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
+                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="18">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Margin="2,0,2,12">
+                            <StackPanel>
+                                <TextBlock Text="SỨC KHỎE PHIÊN" Style="{StaticResource SectionEyebrowStyle}"/>
+                                <TextBlock Text="Dữ liệu truyền theo thời gian thực" Style="{StaticResource BodyTextStyle}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="LIVE TELEMETRY" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource MetricLabelStyle}"/>
+                        </Grid>
+
+                        <UniformGrid Grid.Row="1" Columns="4" Rows="1">
+                            <Border Style="{StaticResource InsetCardStyle}" Margin="0,0,6,0" Padding="13">
+                                <StackPanel>
+                                    <TextBlock Text="TỐC ĐỘ GỬI" Style="{StaticResource MetricLabelStyle}"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                        <TextBlock x:Name="txtFps" Text="0.0" Style="{StaticResource MetricValueStyle}" Foreground="{DynamicResource SuccessBrush}"/>
+                                        <TextBlock Text=" fps" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Bottom" Margin="3,0,0,4"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Khung hình / giây" Style="{StaticResource BodyTextStyle}" FontSize="10" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource InsetCardStyle}" Margin="6,0" Padding="13">
+                                <StackPanel>
+                                    <TextBlock Text="BĂNG THÔNG" Style="{StaticResource MetricLabelStyle}"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                        <TextBlock x:Name="txtBandwidth" Text="0.0" Style="{StaticResource MetricValueStyle}" Foreground="{DynamicResource AccentBrush}"/>
+                                        <TextBlock Text=" KB/s" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Bottom" Margin="3,0,0,4"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Dữ liệu đang gửi" Style="{StaticResource BodyTextStyle}" FontSize="10" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource InsetCardStyle}" Margin="6,0" Padding="13">
+                                <StackPanel>
+                                    <TextBlock Text="ĐỘ PHÂN GIẢI" Style="{StaticResource MetricLabelStyle}"/>
+                                    <TextBlock x:Name="txtResolution" Text="1920×1080" Style="{StaticResource MetricValueStyle}" FontSize="17" Margin="0,10,0,0"/>
+                                    <TextBlock Text="Kích thước màn hình" Style="{StaticResource BodyTextStyle}" FontSize="10" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource InsetCardStyle}" Margin="6,0,0,0" Padding="13">
+                                <StackPanel>
+                                    <TextBlock Text="TỔNG DỮ LIỆU" Style="{StaticResource MetricLabelStyle}"/>
+                                    <TextBlock x:Name="txtTotalData" Text="0 MB" Style="{StaticResource MetricValueStyle}" FontSize="17" Margin="0,10,0,0"/>
+                                    <TextBlock Text="Từ đầu phiên hiện tại" Style="{StaticResource BodyTextStyle}" FontSize="10" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
                     </Grid>
+                </Border>
 
-                    <Border Grid.Row="1" Background="#0A0C10" CornerRadius="8" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" Padding="12">
-                        <TextBox x:Name="txtLogs" FontFamily="Consolas" FontSize="12" Foreground="#38BDF8" Background="Transparent" BorderThickness="0" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AcceptsReturn="True"/>
-                    </Border>
-                </Grid>
-            </Border>
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="62"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="42"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Margin="20,0">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="NHẬT KÝ HOẠT ĐỘNG" Style="{StaticResource SectionEyebrowStyle}"/>
+                                <TextBlock Text="Theo dõi kết nối, khung hình và lệnh điều khiển" Style="{StaticResource BodyTextStyle}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button Content="Xóa nhật ký" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource TextButtonStyle}" Click="BtnClearLog_Click"/>
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Margin="12,0"
+                                Background="{DynamicResource ConsoleBackgroundBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="11"
+                                Padding="10">
+                            <TextBox x:Name="txtLogs" Style="{StaticResource ConsoleTextBoxStyle}" FontSize="12"/>
+                        </Border>
+
+                        <Grid Grid.Row="2" Margin="20,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}" Margin="0,0,8,0"/>
+                                <TextBlock Text="TCP · JPEG DELTA STREAM" Style="{StaticResource MetricLabelStyle}"/>
+                            </StackPanel>
+                            <TextBlock Text="Remote Mini 1.0" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource BodyTextStyle}" FontSize="10"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

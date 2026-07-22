@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -25,7 +26,7 @@ namespace RemoteDesktopServer.Services
         public event Action<string>? OnLog;
         public event Action<string, string>? OnClientConnected; // clientEndPoint, clientName
         public event Action? OnClientDisconnected;
-        public event Action<BitmapSource, ushort, ushort, int>? OnFrameReceived; // image, origW, origH, payloadLen
+        public event Action<List<TileEntry>, ushort, ushort, int>? OnTileFrameReceived; // tiles, origW, origH, payloadLen
         public event Action<double, double>? OnStatsUpdated; // fps, kbps
 
         public string ExpectedPin { get; set; } = "1234";
@@ -166,56 +167,42 @@ namespace RemoteDesktopServer.Services
                 int frameCount = 0;
                 long bytesCount = 0;
 
-                byte[] frameHeader = new byte[11];
+                byte[] tileHeaderBuffer = new byte[13];
 
                 while (IsRunning && IsClientConnected && !token.IsCancellationRequested)
                 {
-                    int headerRead = await ReadExactAsync(stream, frameHeader, 0, 11, token);
-                    if (headerRead < 11) break;
+                    int headerRead = await ReadExactAsync(stream, tileHeaderBuffer, 0, 13, token);
+                    if (headerRead < 13) break;
 
-                    if (frameHeader[0] != PacketProtocol.MAGIC[0] || frameHeader[1] != PacketProtocol.MAGIC[1])
+                    if (tileHeaderBuffer[0] != PacketProtocol.MAGIC[0] || tileHeaderBuffer[1] != PacketProtocol.MAGIC[1])
                     {
                         Log("[Server Protocol Warning] Invalid Frame Header Magic!");
                         continue;
                     }
 
-                    byte pktType = frameHeader[2];
-                    if (pktType != PacketProtocol.PKT_TYPE_FRAME)
+                    byte pktType = tileHeaderBuffer[2];
+                    if (pktType != PacketProtocol.PKT_TYPE_TILE_FRAME)
                     {
                         continue;
                     }
 
-                    byte[] wBytes = new byte[2];
-                    byte[] hBytes = new byte[2];
-                    byte[] pLenBytes = new byte[4];
+                    ushort origW = ReadUInt16BE(tileHeaderBuffer, 3);
+                    ushort origH = ReadUInt16BE(tileHeaderBuffer, 5);
+                    ushort tileCount = ReadUInt16BE(tileHeaderBuffer, 7);
+                    uint totalPayloadLen = ReadUInt32BE(tileHeaderBuffer, 9);
 
-                    Array.Copy(frameHeader, 3, wBytes, 0, 2);
-                    Array.Copy(frameHeader, 5, hBytes, 0, 2);
-                    Array.Copy(frameHeader, 7, pLenBytes, 0, 4);
+                    byte[] payload = new byte[totalPayloadLen];
+                    int payloadRead = await ReadExactAsync(stream, payload, 0, (int)totalPayloadLen, token);
+                    if (payloadRead < totalPayloadLen) break;
 
-                    if (BitConverter.IsLittleEndian)
+                    List<TileEntry> tiles = ParseTilePayload(payload, tileCount);
+                    if (tiles.Count > 0)
                     {
-                        Array.Reverse(wBytes);
-                        Array.Reverse(hBytes);
-                        Array.Reverse(pLenBytes);
-                    }
-
-                    ushort origW = BitConverter.ToUInt16(wBytes, 0);
-                    ushort origH = BitConverter.ToUInt16(hBytes, 0);
-                    uint framePayloadLen = BitConverter.ToUInt32(pLenBytes, 0);
-
-                    byte[] jpegBytes = new byte[framePayloadLen];
-                    int payloadRead = await ReadExactAsync(stream, jpegBytes, 0, (int)framePayloadLen, token);
-                    if (payloadRead < framePayloadLen) break;
-
-                    BitmapSource? bitmap = DecodeJpegToBitmapSource(jpegBytes);
-                    if (bitmap != null)
-                    {
-                        OnFrameReceived?.Invoke(bitmap, origW, origH, (int)framePayloadLen);
+                        OnTileFrameReceived?.Invoke(tiles, origW, origH, (int)totalPayloadLen);
                     }
 
                     frameCount++;
-                    bytesCount += 11 + framePayloadLen;
+                    bytesCount += 13 + totalPayloadLen;
 
                     long nowMs = sw.ElapsedMilliseconds;
                     if (nowMs - lastStatTime >= 1000)
@@ -245,23 +232,53 @@ namespace RemoteDesktopServer.Services
             }
         }
 
-        private BitmapSource? DecodeJpegToBitmapSource(byte[] jpegBytes)
+        private List<TileEntry> ParseTilePayload(byte[] payload, ushort tileCount)
         {
-            try
+            var list = new List<TileEntry>(tileCount);
+            int offset = 0;
+
+            for (int i = 0; i < tileCount && offset + 12 <= payload.Length; i++)
             {
-                using MemoryStream ms = new MemoryStream(jpegBytes);
-                BitmapImage bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.StreamSource = ms;
-                bitmap.EndInit();
-                bitmap.Freeze(); // Make cross-thread accessible
-                return bitmap;
+                ushort x = ReadUInt16BE(payload, offset);
+                ushort y = ReadUInt16BE(payload, offset + 2);
+                ushort w = ReadUInt16BE(payload, offset + 4);
+                ushort h = ReadUInt16BE(payload, offset + 6);
+                uint jpegLen = ReadUInt32BE(payload, offset + 8);
+                offset += 12;
+
+                if (offset + jpegLen > payload.Length) break;
+
+                byte[] jpegBytes = new byte[jpegLen];
+                Array.Copy(payload, offset, jpegBytes, 0, jpegLen);
+                offset += (int)jpegLen;
+
+                list.Add(new TileEntry
+                {
+                    X = x,
+                    Y = y,
+                    Width = w,
+                    Height = h,
+                    JpegBytes = jpegBytes
+                });
             }
-            catch
-            {
-                return null;
-            }
+
+            return list;
+        }
+
+        private static ushort ReadUInt16BE(byte[] buffer, int offset)
+        {
+            byte[] b = new byte[2];
+            Array.Copy(buffer, offset, b, 0, 2);
+            if (BitConverter.IsLittleEndian) Array.Reverse(b);
+            return BitConverter.ToUInt16(b, 0);
+        }
+
+        private static uint ReadUInt32BE(byte[] buffer, int offset)
+        {
+            byte[] b = new byte[4];
+            Array.Copy(buffer, offset, b, 0, 4);
+            if (BitConverter.IsLittleEndian) Array.Reverse(b);
+            return BitConverter.ToUInt32(b, 0);
         }
 
         public void SendMouseCommand(string action, float normX, float normY, string button = "left", int delta = 0)

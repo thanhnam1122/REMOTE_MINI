@@ -1,16 +1,18 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using RemoteDesktopServer.Helpers;
+using RemoteDesktopServer.Models;
 using RemoteDesktopServer.Services;
 
 using WpfMessageBox = System.Windows.MessageBox;
-using MediaColor = System.Windows.Media.Color;
-using MediaColorConverter = System.Windows.Media.ColorConverter;
+using MediaBrush = System.Windows.Media.Brush;
 using Point = System.Windows.Point;
 
 namespace RemoteDesktopServer
@@ -22,6 +24,13 @@ namespace RemoteDesktopServer
         private ushort _remoteHeight = 1080;
         private DateTime _lastMouseMoveTime = DateTime.MinValue;
 
+        private WriteableBitmap? _screenBitmap;
+        private int _isRenderPending = 0;
+        private List<TileEntry>? _latestTiles;
+        private ushort _latestOrigW;
+        private ushort _latestOrigH;
+        private int _latestFrameSize;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -30,7 +39,7 @@ namespace RemoteDesktopServer
             _serverService.OnLog += ServerService_OnLog;
             _serverService.OnClientConnected += ServerService_OnClientConnected;
             _serverService.OnClientDisconnected += ServerService_OnClientDisconnected;
-            _serverService.OnFrameReceived += ServerService_OnFrameReceived;
+            _serverService.OnTileFrameReceived += ServerService_OnTileFrameReceived;
             _serverService.OnStatsUpdated += ServerService_OnStatsUpdated;
 
             // Auto-start listener on launch
@@ -48,17 +57,18 @@ namespace RemoteDesktopServer
             _serverService.ExpectedPin = txtPin.Text.Trim();
             _serverService.Start(port);
 
-            btnToggleServer.Content = "🛑 Dừng Server";
+            btnToggleServer.Content = "Dừng máy chủ";
             UpdateStatusUI(false, $"Đang lắng nghe Cổng {port}...");
         }
 
         private void StopServer()
         {
             _serverService.Stop();
-            btnToggleServer.Content = "🚀 Chạy Server";
+            btnToggleServer.Content = "Khởi động máy chủ";
             UpdateStatusUI(false, "Server đã dừng");
             overlayPlaceholder.Visibility = Visibility.Visible;
             imgViewport.Source = null;
+            _screenBitmap = null;
         }
 
         private void BtnToggleServer_Click(object sender, RoutedEventArgs e)
@@ -89,6 +99,7 @@ namespace RemoteDesktopServer
             {
                 UpdateStatusUI(true, $"Đã kết nối: {clientName}");
                 overlayPlaceholder.Visibility = Visibility.Collapsed;
+                _screenBitmap = null;
             });
         }
 
@@ -97,8 +108,9 @@ namespace RemoteDesktopServer
             Dispatcher.Invoke(() =>
             {
                 UpdateStatusUI(false, "Chờ Client kết nối...");
-                overlayPlaceholder.Visibility = Visibility.Visible;
+                overlayPlaceholder.Visibility = Visibility.Collapsed;
                 imgViewport.Source = null;
+                _screenBitmap = null;
                 txtFps.Text = "0.0";
                 txtBandwidth.Text = "0.0";
                 txtResolution.Text = "N/A";
@@ -106,16 +118,109 @@ namespace RemoteDesktopServer
             });
         }
 
-        private void ServerService_OnFrameReceived(BitmapSource bitmap, ushort origW, ushort origH, int frameSize)
+        private void ServerService_OnTileFrameReceived(List<TileEntry> tiles, ushort origW, ushort origH, int frameSize)
         {
-            Dispatcher.Invoke(() =>
+            _latestTiles = tiles;
+            _latestOrigW = origW;
+            _latestOrigH = origH;
+            _latestFrameSize = frameSize;
+
+            if (System.Threading.Interlocked.CompareExchange(ref _isRenderPending, 1, 0) == 0)
             {
-                _remoteWidth = origW;
-                _remoteHeight = origH;
-                imgViewport.Source = bitmap;
-                txtResolution.Text = $"{origW}x{origH}";
-                txtFrameSize.Text = $"{(frameSize / 1024.0):F1} KB";
-            });
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
+                {
+                    try
+                    {
+                        var tilesToRender = _latestTiles;
+                        if (tilesToRender != null && tilesToRender.Count > 0)
+                        {
+                            RenderTileDeltaFrame(tilesToRender, _latestOrigW, _latestOrigH, _latestFrameSize);
+                        }
+                    }
+                    finally
+                    {
+                        System.Threading.Interlocked.Exchange(ref _isRenderPending, 0);
+                    }
+                });
+            }
+        }
+
+        private void RenderTileDeltaFrame(List<TileEntry> tiles, ushort origW, ushort origH, int frameSize)
+        {
+            _remoteWidth = origW;
+            _remoteHeight = origH;
+            overlayPlaceholder.Visibility = Visibility.Collapsed;
+            txtResolution.Text = $"{origW}x{origH}";
+            txtFrameSize.Text = $"{(frameSize / 1024.0):F1} KB";
+
+            // Determine canvas resolution from first tile or max tile bounds
+            int maxCanvasW = 0;
+            int maxCanvasH = 0;
+            foreach (var t in tiles)
+            {
+                if (t.X + t.Width > maxCanvasW) maxCanvasW = t.X + t.Width;
+                if (t.Y + t.Height > maxCanvasH) maxCanvasH = t.Y + t.Height;
+            }
+
+            if (_screenBitmap == null)
+            {
+                _screenBitmap = new WriteableBitmap(maxCanvasW, maxCanvasH, 96, 96, PixelFormats.Bgra32, null);
+                imgViewport.Source = _screenBitmap;
+            }
+            else if (_screenBitmap.PixelWidth < maxCanvasW || _screenBitmap.PixelHeight < maxCanvasH)
+            {
+                int canvasWidth = Math.Max(_screenBitmap.PixelWidth, maxCanvasW);
+                int canvasHeight = Math.Max(_screenBitmap.PixelHeight, maxCanvasH);
+                _screenBitmap = new WriteableBitmap(canvasWidth, canvasHeight, 96, 96, PixelFormats.Bgra32, null);
+                imgViewport.Source = _screenBitmap;
+            }
+
+            _screenBitmap.Lock();
+            try
+            {
+                foreach (var tile in tiles)
+                {
+                    BitmapSource? tileSource = DecodeTileJpeg(tile.JpegBytes);
+                    if (tileSource == null) continue;
+
+                    FormatConvertedBitmap converted = new FormatConvertedBitmap(tileSource, PixelFormats.Bgra32, null, 0);
+                    int destinationStride = _screenBitmap.BackBufferStride;
+                    int destinationOffset = (tile.Y * destinationStride) + (tile.X * 4);
+                    IntPtr destination = IntPtr.Add(_screenBitmap.BackBuffer, destinationOffset);
+                    int destinationBufferSize = ((tile.Height - 1) * destinationStride) + (tile.Width * 4);
+
+                    converted.CopyPixels(
+                        new Int32Rect(0, 0, tile.Width, tile.Height),
+                        destination,
+                        destinationBufferSize,
+                        destinationStride);
+                }
+
+                _screenBitmap.AddDirtyRect(new Int32Rect(0, 0, _screenBitmap.PixelWidth, _screenBitmap.PixelHeight));
+            }
+            finally
+            {
+                _screenBitmap.Unlock();
+            }
+        }
+
+        private BitmapSource? DecodeTileJpeg(byte[] jpegBytes)
+        {
+            try
+            {
+                using MemoryStream ms = new MemoryStream(jpegBytes);
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = ms;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void ServerService_OnStatsUpdated(double fps, double kbps)
@@ -130,24 +235,33 @@ namespace RemoteDesktopServer
         private void UpdateStatusUI(bool isConnected, string statusText)
         {
             txtStatus.Text = statusText;
-            if (isConnected)
-            {
-                ellipseStatus.Fill = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#10B981")); // Green
-                borderStatusPill.Background = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#065F46"));
-                borderStatusPill.BorderBrush = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#059669"));
-            }
-            else if (_serverService.IsRunning)
-            {
-                ellipseStatus.Fill = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#F59E0B")); // Yellow
-                borderStatusPill.Background = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#78350F"));
-                borderStatusPill.BorderBrush = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#D97706"));
-            }
+            ApplyStatusPalette(isConnected, _serverService.IsRunning);
+        }
+
+        private void ApplyStatusPalette(bool isConnected, bool isRunning)
+        {
+            string state = isConnected ? "Success" : isRunning ? "Warning" : "Danger";
+            ellipseStatus.Fill = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}Brush");
+            borderStatusPill.Background = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}SoftBrush");
+            borderStatusPill.BorderBrush = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}BorderBrush");
+        }
+
+        private bool _isLightTheme = false;
+
+        private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+        {
+            _isLightTheme = !_isLightTheme;
+            string themeUri = _isLightTheme ? "Themes/LightTheme.xaml" : "Themes/DarkTheme.xaml";
+
+            var dict = new ResourceDictionary { Source = new Uri(themeUri, UriKind.Relative) };
+            var dictionaries = System.Windows.Application.Current.Resources.MergedDictionaries;
+            if (dictionaries.Count == 0)
+                dictionaries.Add(dict);
             else
-            {
-                ellipseStatus.Fill = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#EF4444")); // Red
-                borderStatusPill.Background = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#1F2937"));
-                borderStatusPill.BorderBrush = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#374151"));
-            }
+                dictionaries[0] = dict;
+
+            btnToggleTheme.Content = _isLightTheme ? "Tối" : "Sáng";
+            ApplyStatusPalette(_serverService.IsClientConnected, _serverService.IsRunning);
         }
 
         #region Viewport Mouse & Keyboard Interactivity
@@ -156,7 +270,6 @@ namespace RemoteDesktopServer
         {
             if (!_serverService.IsClientConnected) return;
 
-            // Rate limit mouse move packets to ~50 Hz (every 20ms) when dragging/moving
             if ((DateTime.Now - _lastMouseMoveTime).TotalMilliseconds < 20) return;
             _lastMouseMoveTime = DateTime.Now;
 
@@ -176,7 +289,7 @@ namespace RemoteDesktopServer
         private void ImgViewport_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (!_serverService.IsClientConnected) return;
-            viewportBorder.Focus(); // Take focus for keyboard events
+            viewportBorder.Focus();
 
             Point pos = e.GetPosition(imgViewport);
             var (isValid, normX, normY) = WpfCoordinateMapper.GetNormalizedCoordinates(

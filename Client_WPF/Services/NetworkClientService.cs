@@ -17,6 +17,7 @@ namespace RemoteDesktopClient.Services
         private const byte PKT_TYPE_FRAME = 0x01;
         private const byte PKT_TYPE_CONTROL = 0x02;
         private const byte PKT_TYPE_CONFIG = 0x03;
+        private const byte PKT_TYPE_TILE_FRAME = 0x04;
 
         private TcpClient? _tcpClient;
         private NetworkStream? _stream;
@@ -40,7 +41,7 @@ namespace RemoteDesktopClient.Services
 
         public NetworkClientService()
         {
-            Capturer = new ScreenCapturer(quality: 55, scale: 0.5, targetFps: 60);
+            Capturer = new ScreenCapturer(quality: 65, scale: 0.5, targetFps: 60);
             Executor = new RemoteExecutor();
         }
 
@@ -157,49 +158,80 @@ namespace RemoteDesktopClient.Services
 
         private async Task StreamFramesAsync(CancellationToken token)
         {
+            Log($"[Capture] Đang dùng {Capturer.BackendName}.");
+            Capturer.RequestKeyframe();
             Stopwatch sw = Stopwatch.StartNew();
             long lastStatTime = sw.ElapsedMilliseconds;
             int frameCount = 0;
             long bytesCount = 0;
+            string? lastCaptureError = null;
 
-            byte[] header = new byte[11];
+            // Packet Header: Magic (2B) + Type (1B: 0x04) + OrigW (2B) + OrigH (2B) + TileCount (2B) + PayloadLen (4B) = 13 Bytes
+            byte[] header = new byte[13];
             header[0] = MAGIC_HEADER[0];
             header[1] = MAGIC_HEADER[1];
-            header[2] = PKT_TYPE_FRAME;
+            header[2] = PKT_TYPE_TILE_FRAME;
 
             while (IsRunning && IsConnected && _stream != null && !token.IsCancellationRequested)
             {
                 long frameStartMs = sw.ElapsedMilliseconds;
 
-                var (jpegBytes, origW, origH) = Capturer.CaptureFrame();
+                var (payloadBytes, origW, origH, tileCount) = Capturer.CaptureDeltaTiles();
 
-                if (jpegBytes == null || jpegBytes.Length == 0)
+                if (payloadBytes == null || tileCount == 0)
                 {
-                    await Task.Delay(10, token);
+                    if (!string.IsNullOrWhiteSpace(Capturer.LastError)
+                        && !string.Equals(lastCaptureError, Capturer.LastError, StringComparison.Ordinal))
+                    {
+                        lastCaptureError = Capturer.LastError;
+                        Log($"[Capture Error] {lastCaptureError}");
+                    }
+
+                    // No screen changes: report stats & brief sleep
+                    long idleNowMs = sw.ElapsedMilliseconds;
+                    if (idleNowMs - lastStatTime >= 1000)
+                    {
+                        double elapsedSec = (idleNowMs - lastStatTime) / 1000.0;
+                        double currentFps = frameCount / elapsedSec;
+                        double kbps = (bytesCount / 1024.0) / elapsedSec;
+
+                        OnStatsUpdated?.Invoke(currentFps, kbps, origW, origH, Interlocked.Read(ref _totalBytesSent));
+
+                        frameCount = 0;
+                        bytesCount = 0;
+                        lastStatTime = idleNowMs;
+                    }
+
+                    int fpsLimitIdle = Capturer.TargetFps;
+                    int targetIntervalMsIdle = 1000 / Math.Max(5, fpsLimitIdle);
+                    await Task.Delay(targetIntervalMsIdle, token);
                     continue;
                 }
 
-                int payloadLen = jpegBytes.Length;
+                int payloadLen = payloadBytes.Length;
 
                 byte[] wBytes = BitConverter.GetBytes(origW);
                 byte[] hBytes = BitConverter.GetBytes(origH);
+                byte[] countBytes = BitConverter.GetBytes(tileCount);
                 byte[] lenBytes = BitConverter.GetBytes((uint)payloadLen);
 
                 if (BitConverter.IsLittleEndian)
                 {
                     Array.Reverse(wBytes);
                     Array.Reverse(hBytes);
+                    Array.Reverse(countBytes);
                     Array.Reverse(lenBytes);
                 }
 
                 Array.Copy(wBytes, 0, header, 3, 2);
                 Array.Copy(hBytes, 0, header, 5, 2);
-                Array.Copy(lenBytes, 0, header, 7, 4);
+                Array.Copy(countBytes, 0, header, 7, 2);
+                Array.Copy(lenBytes, 0, header, 9, 4);
 
                 try
                 {
                     await _stream.WriteAsync(header, 0, header.Length, token);
-                    await _stream.WriteAsync(jpegBytes, 0, jpegBytes.Length, token);
+                    await _stream.WriteAsync(payloadBytes, 0, payloadBytes.Length, token);
                     await _stream.FlushAsync(token);
 
                     frameCount++;
@@ -209,7 +241,7 @@ namespace RemoteDesktopClient.Services
                 }
                 catch (Exception ex)
                 {
-                    Log($"[Network Error] Lỗi gửi frame: {ex.Message}");
+                    Log($"[Network Error] Lỗi gửi delta frame: {ex.Message}");
                     break;
                 }
 

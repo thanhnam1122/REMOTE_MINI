@@ -11,7 +11,7 @@ $serverExecutable = Join-Path $serverDirectory 'bin\Debug\net8.0-windows\RemoteD
 
 $clientProject = Join-Path $projectRoot 'Client_WPF\RemoteDesktopClient.csproj'
 $clientDirectory = Join-Path $projectRoot 'Client_WPF'
-$clientExecutable = Join-Path $clientDirectory 'bin\Debug\net8.0-windows\RemoteDesktopClient.exe'
+$clientExecutable = Join-Path $clientDirectory 'bin\Debug\net8.0-windows10.0.19041.0\RemoteDesktopClient.exe'
 
 function Stop-RemoteMiniProcesses {
     Write-Host '[1/3] Stopping running Remote Mini processes...' -ForegroundColor Cyan

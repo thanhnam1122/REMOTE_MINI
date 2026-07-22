@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -13,6 +14,7 @@ namespace RemoteDesktopServer.Models
         public const byte PKT_TYPE_FRAME = 0x01;
         public const byte PKT_TYPE_CONTROL = 0x02;
         public const byte PKT_TYPE_CONFIG = 0x03;
+        public const byte PKT_TYPE_TILE_FRAME = 0x04;
 
         public static byte[] CreateMousePacket(string action, float x, float y, string button = "left", int delta = 0)
         {
@@ -96,5 +98,14 @@ namespace RemoteDesktopServer.Models
     {
         public string Pin { get; set; } = "";
         public string ClientName { get; set; } = "";
+    }
+
+    public class TileEntry
+    {
+        public ushort X { get; set; }
+        public ushort Y { get; set; }
+        public ushort Width { get; set; }
+        public ushort Height { get; set; }
+        public byte[] JpegBytes { get; set; } = Array.Empty<byte>();
     }
 }

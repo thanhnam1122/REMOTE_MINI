@@ -4,15 +4,16 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using RemoteDesktopClient.Services;
+using RemoteDesktopClient.UI;
 using WpfMessageBox = System.Windows.MessageBox;
-using MediaColor = System.Windows.Media.Color;
-using MediaColorConverter = System.Windows.Media.ColorConverter;
+using MediaBrush = System.Windows.Media.Brush;
 
 namespace RemoteDesktopClient
 {
     public partial class MainWindow : Window
     {
         private readonly NetworkClientService _clientService;
+        private YellowBorderOverlay? _borderOverlay;
 
         public MainWindow()
         {
@@ -93,24 +94,29 @@ namespace RemoteDesktopClient
 
                 if (isConnected)
                 {
-                    ellipseStatus.Fill = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#10B981")); // Green
-                    borderStatusPill.Background = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#065F46"));
-                    borderStatusPill.BorderBrush = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#059669"));
-                    btnConnect.Content = "⛔ Ngắt Kết Nối Server";
+                    ApplyStatusPalette("Success");
+                    btnConnect.Content = "Ngắt kết nối";
+
+                    // Show native glowing yellow screen-sharing border
+                    if (_borderOverlay == null)
+                    {
+                        _borderOverlay = new YellowBorderOverlay();
+                    }
+                    _borderOverlay.Show();
                 }
                 else if (_clientService.IsRunning)
                 {
-                    ellipseStatus.Fill = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#F59E0B")); // Yellow
-                    borderStatusPill.Background = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#78350F"));
-                    borderStatusPill.BorderBrush = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#D97706"));
-                    btnConnect.Content = "⏹ Hủy Kết Nối";
+                    ApplyStatusPalette("Warning");
+                    btnConnect.Content = "Hủy kết nối";
+
+                    _borderOverlay?.Hide();
                 }
                 else
                 {
-                    ellipseStatus.Fill = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#EF4444")); // Red
-                    borderStatusPill.Background = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#1F2937"));
-                    borderStatusPill.BorderBrush = new SolidColorBrush((MediaColor)MediaColorConverter.ConvertFromString("#374151"));
-                    btnConnect.Content = "🚀 Bắt đầu Kết nối Server";
+                    ApplyStatusPalette("Danger");
+                    btnConnect.Content = "Kết nối và chia sẻ";
+
+                    _borderOverlay?.Hide();
                 }
             });
         }
@@ -139,17 +145,38 @@ namespace RemoteDesktopClient
             _clientService?.Capturer.UpdateSettings(null, null, val);
         }
 
-        private void BtnClearLog_Click(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-        }
-
         private void BtnClearLog_Click(object sender, RoutedEventArgs e)
         {
             txtLogs.Clear();
         }
+        private void ApplyStatusPalette(string state)
+        {
+            ellipseStatus.Fill = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}Brush");
+            borderStatusPill.Background = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}SoftBrush");
+            borderStatusPill.BorderBrush = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}BorderBrush");
+        }
+
+        private bool _isLightTheme = false;
+
+        private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+        {
+            _isLightTheme = !_isLightTheme;
+            string themeUri = _isLightTheme ? "Themes/LightTheme.xaml" : "Themes/DarkTheme.xaml";
+
+            var dict = new ResourceDictionary { Source = new Uri(themeUri, UriKind.Relative) };
+            var dictionaries = System.Windows.Application.Current.Resources.MergedDictionaries;
+            if (dictionaries.Count == 0)
+                dictionaries.Add(dict);
+            else
+                dictionaries[0] = dict;
+
+            btnToggleTheme.Content = _isLightTheme ? "Tối" : "Sáng";
+            ApplyStatusPalette(_clientService.IsConnected ? "Success" : _clientService.IsRunning ? "Warning" : "Danger");
+        }
 
         protected override void OnClosed(EventArgs e)
         {
+            _borderOverlay?.Close();
             _clientService.Stop();
             _clientService.Capturer.Dispose();
             base.OnClosed(e);
