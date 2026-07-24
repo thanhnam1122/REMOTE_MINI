@@ -4,8 +4,10 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <FontFamily x:Key="AppFontFamily">pack://application:,,,/Assets/Fonts/#SF Pro Display, Segoe UI, sans-serif</FontFamily>
+            <FontFamily x:Key="AppFontFamilySemibold">pack://application:,,,/Assets/Fonts/#SF Pro Display, Segoe UI Semibold, sans-serif</FontFamily>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/DarkTheme.xaml"/>
+                <ResourceDictionary Source="Themes/LightTheme.xaml"/>
                 <ResourceDictionary Source="Themes/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

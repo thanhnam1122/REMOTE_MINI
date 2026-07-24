@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource AppBackgroundBrush}"
         Foreground="{DynamicResource TextPrimaryBrush}"
-        FontFamily="Segoe UI"
+        FontFamily="{DynamicResource AppFontFamily}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True">
 
@@ -75,6 +75,12 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
+                    <Button x:Name="btnScreenshot"
+                            Content="Chụp màn hình"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="0,0,10,0"
+                            Click="BtnScreenshot_Click"
+                            ToolTip="Chụp và lưu màn hình máy này"/>
                     <Button x:Name="btnToggleTheme"
                             Content="Sáng"
                             Width="68"
@@ -179,25 +185,25 @@
                             <StackPanel Grid.Row="0">
                                 <Grid>
                                     <TextBlock Text="Chất lượng JPEG" Style="{StaticResource InputLabelStyle}"/>
-                                    <TextBlock x:Name="txtQualityVal" Text="55%" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe UI Semibold" FontSize="11"/>
+                                    <TextBlock x:Name="txtQualityVal" Text="100%" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="{DynamicResource AppFontFamilySemibold}" FontSize="11"/>
                                 </Grid>
-                                <Slider x:Name="sldQuality" Minimum="10" Maximum="100" Value="55" TickFrequency="5" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldQuality_ValueChanged"/>
+                                <Slider x:Name="sldQuality" Minimum="10" Maximum="100" Value="100" TickFrequency="5" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldQuality_ValueChanged"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" VerticalAlignment="Center">
                                 <Grid>
                                     <TextBlock Text="Tỉ lệ khung hình" Style="{StaticResource InputLabelStyle}"/>
-                                    <TextBlock x:Name="txtScaleVal" Text="0.50x" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe UI Semibold" FontSize="11"/>
+                                    <TextBlock x:Name="txtScaleVal" Text="1.00x" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="{DynamicResource AppFontFamilySemibold}" FontSize="11"/>
                                 </Grid>
-                                <Slider x:Name="sldScale" Minimum="0.25" Maximum="1" Value="0.5" TickFrequency="0.05" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldScale_ValueChanged"/>
+                                <Slider x:Name="sldScale" Minimum="0.25" Maximum="1" Value="1.0" TickFrequency="0.05" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldScale_ValueChanged"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
                                 <Grid>
                                     <TextBlock Text="Giới hạn FPS" Style="{StaticResource InputLabelStyle}"/>
-                                    <TextBlock x:Name="txtFpsVal" Text="60 FPS" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe UI Semibold" FontSize="11"/>
+                                    <TextBlock x:Name="txtFpsVal" Text="120 FPS" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}" FontFamily="{DynamicResource AppFontFamilySemibold}" FontSize="11"/>
                                 </Grid>
-                                <Slider x:Name="sldFps" Minimum="5" Maximum="120" Value="60" TickFrequency="5" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldFps_ValueChanged"/>
+                                <Slider x:Name="sldFps" Minimum="5" Maximum="120" Value="120" TickFrequency="5" IsSnapToTickEnabled="True" Style="{StaticResource ModernSliderStyle}" ValueChanged="SldFps_ValueChanged"/>
                             </StackPanel>
                         </Grid>
                     </Grid>

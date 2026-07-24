@@ -31,9 +31,34 @@ namespace RemoteDesktopServer
         private ushort _latestOrigH;
         private int _latestFrameSize;
 
+        private UserSettings _userSettings;
+
         public MainWindow()
         {
+            FontInstallerService.InstallFontFiles();
+
             InitializeComponent();
+
+            _userSettings = ConfigService.Load();
+
+            txtPort.Text = _userSettings.ServerPort.ToString();
+            txtPin.Text = _userSettings.Pin;
+
+            _isLightTheme = _userSettings.Theme.Equals("Light", StringComparison.OrdinalIgnoreCase);
+            ApplyTheme(_isLightTheme);
+
+            ConfigService.OnSettingsChanged += (newSettings) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _userSettings = newSettings;
+                    bool isLight = _userSettings.Theme.Equals("Light", StringComparison.OrdinalIgnoreCase);
+                    if (_isLightTheme != isLight)
+                    {
+                        ApplyTheme(isLight);
+                    }
+                });
+            };
 
             _serverService = new TcpServerService();
             _serverService.OnLog += ServerService_OnLog;
@@ -283,11 +308,11 @@ namespace RemoteDesktopServer
             borderStatusPill.BorderBrush = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}BorderBrush");
         }
 
-        private bool _isLightTheme = false;
+        private bool _isLightTheme = true;
 
-        private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+        private void ApplyTheme(bool isLight)
         {
-            _isLightTheme = !_isLightTheme;
+            _isLightTheme = isLight;
             string themeUri = _isLightTheme ? "Themes/LightTheme.xaml" : "Themes/DarkTheme.xaml";
 
             var dict = new ResourceDictionary { Source = new Uri(themeUri, UriKind.Relative) };
@@ -298,7 +323,28 @@ namespace RemoteDesktopServer
                 dictionaries[0] = dict;
 
             btnToggleTheme.Content = _isLightTheme ? "Tối" : "Sáng";
-            ApplyStatusPalette(_serverService.IsClientConnected, _serverService.IsRunning);
+            if (_serverService != null)
+            {
+                ApplyStatusPalette(_serverService.IsClientConnected, _serverService.IsRunning);
+            }
+        }
+
+        private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyTheme(!_isLightTheme);
+            SaveCurrentSettings();
+        }
+
+        private void SaveCurrentSettings()
+        {
+            if (_userSettings == null) return;
+
+            _userSettings.Theme = _isLightTheme ? "Light" : "Dark";
+            _userSettings.FontFamily = "SF Pro Display";
+            if (int.TryParse(txtPort.Text.Trim(), out int port)) _userSettings.ServerPort = port;
+            _userSettings.Pin = txtPin.Text.Trim();
+
+            ConfigService.Save(_userSettings);
         }
 
         #region Viewport Mouse & Keyboard Interactivity
@@ -480,11 +526,60 @@ namespace RemoteDesktopServer
             txtLogs.Clear();
         }
 
+        private void BtnScreenshot_Click(object sender, RoutedEventArgs e)
+        {
+            if (_screenBitmap == null || _screenBitmap.PixelWidth == 0 || _screenBitmap.PixelHeight == 0)
+            {
+                WpfMessageBox.Show("Chưa có hình ảnh màn hình từ xa để chụp!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                // Create a copy of the WriteableBitmap frame
+                BitmapSource frameCopy = _screenBitmap.Clone();
+                frameCopy.Freeze();
+
+                // Copy image to Clipboard for quick pasting
+                System.Windows.Clipboard.SetImage(frameCopy);
+
+                // Open SaveFileDialog to save image
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
+                    DefaultExt = ".png",
+                    FileName = $"Remote_Screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    string filePath = dialog.FileName;
+                    BitmapEncoder encoder = filePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                        ? new JpegBitmapEncoder { QualityLevel = 95 }
+                        : new PngBitmapEncoder();
+
+                    encoder.Frames.Add(BitmapFrame.Create(frameCopy));
+                    using (var stream = File.Create(filePath))
+                    {
+                        encoder.Save(stream);
+                    }
+
+                    ServerService_OnLog($"Đã chụp màn hình và lưu tại: {filePath} (Đã sao chép vào Clipboard)");
+                    WpfMessageBox.Show($"Đã lưu ảnh màn hình thành công!\n\nĐường dẫn: {filePath}\n(Đã tự động sao chép vào Clipboard)", "Chụp màn hình", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Không thể lưu ảnh màn hình: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         #endregion
 
         protected override void OnClosed(EventArgs e)
         {
-            _serverService.Stop();
+            SaveCurrentSettings();
+            _serverService?.Stop();
             base.OnClosed(e);
         }
     }

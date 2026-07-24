@@ -18,13 +18,13 @@
     </Style>
 
     <Style x:Key="SectionEyebrowStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
     </Style>
 
     <Style x:Key="CardTitleStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
         <Setter Property="FontSize" Value="17"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
@@ -36,20 +36,20 @@
     </Style>
 
     <Style x:Key="InputLabelStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
         <Setter Property="Margin" Value="1,0,0,7"/>
     </Style>
 
     <Style x:Key="MetricLabelStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}"/>
     </Style>
 
     <Style x:Key="MetricValueStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
         <Setter Property="FontSize" Value="22"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
@@ -60,7 +60,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="16,11"/>
-        <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>

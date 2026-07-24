@@ -11,4 +11,10 @@
     <AssemblyName>RemoteDesktopServer</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Content Include="Assets\Fonts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

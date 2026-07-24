@@ -18,4 +18,10 @@
     <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Assets\Fonts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

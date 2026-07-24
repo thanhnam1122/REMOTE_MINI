@@ -1,8 +1,10 @@
 #nullable enable
 using System;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using RemoteDesktopClient.Services;
 using RemoteDesktopClient.UI;
 using WpfMessageBox = System.Windows.MessageBox;
@@ -14,10 +16,38 @@ namespace RemoteDesktopClient
     {
         private readonly NetworkClientService _clientService;
         private YellowBorderOverlay? _borderOverlay;
+        private UserSettings _userSettings;
 
         public MainWindow()
         {
+            FontInstallerService.InstallFontFiles();
+
             InitializeComponent();
+
+            _userSettings = ConfigService.Load();
+
+            txtIp.Text = _userSettings.ServerIp;
+            txtPort.Text = _userSettings.ServerPort.ToString();
+            txtPin.Text = _userSettings.Pin;
+            sldQuality.Value = _userSettings.Quality;
+            sldScale.Value = _userSettings.Scale;
+            sldFps.Value = _userSettings.Fps;
+
+            _isLightTheme = _userSettings.Theme.Equals("Light", StringComparison.OrdinalIgnoreCase);
+            ApplyTheme(_isLightTheme);
+
+            ConfigService.OnSettingsChanged += (newSettings) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _userSettings = newSettings;
+                    bool isLight = _userSettings.Theme.Equals("Light", StringComparison.OrdinalIgnoreCase);
+                    if (_isLightTheme != isLight)
+                    {
+                        ApplyTheme(isLight);
+                    }
+                });
+            };
 
             _clientService = new NetworkClientService();
             _clientService.OnLog += ClientService_OnLog;
@@ -52,6 +82,7 @@ namespace RemoteDesktopClient
 
                 // Apply initial settings from UI sliders
                 _clientService.Capturer.UpdateSettings((int)sldQuality.Value, sldScale.Value, (int)sldFps.Value);
+                SaveCurrentSettings();
                 _clientService.Start(ip, port, pin);
             }
         }
@@ -149,6 +180,69 @@ namespace RemoteDesktopClient
         {
             txtLogs.Clear();
         }
+
+        private void BtnScreenshot_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int width = (int)SystemParameters.PrimaryScreenWidth;
+                int height = (int)SystemParameters.PrimaryScreenHeight;
+
+                using var bmp = new System.Drawing.Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using (var g = System.Drawing.Graphics.FromImage(bmp))
+                {
+                    g.CopyFromScreen(0, 0, 0, 0, new System.Drawing.Size(width, height), System.Drawing.CopyPixelOperation.SourceCopy);
+                }
+
+                IntPtr hBitmap = bmp.GetHbitmap();
+                BitmapSource bitmapSource;
+                try
+                {
+                    bitmapSource = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                        hBitmap,
+                        IntPtr.Zero,
+                        Int32Rect.Empty,
+                        BitmapSizeOptions.FromEmptyOptions());
+                }
+                finally
+                {
+                    DeleteObject(hBitmap);
+                }
+
+                System.Windows.Clipboard.SetImage(bitmapSource);
+
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
+                    DefaultExt = ".png",
+                    FileName = $"Client_Screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    string filePath = dialog.FileName;
+                    BitmapEncoder encoder = filePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                        ? new JpegBitmapEncoder { QualityLevel = 95 }
+                        : new PngBitmapEncoder();
+
+                    encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+                    using (var stream = File.Create(filePath))
+                    {
+                        encoder.Save(stream);
+                    }
+
+                    Log($"Đã chụp màn hình và lưu tại: {filePath} (Đã sao chép vào Clipboard)");
+                    WpfMessageBox.Show($"Đã lưu ảnh màn hình thành công!\n\nĐường dẫn: {filePath}\n(Đã tự động sao chép vào Clipboard)", "Chụp màn hình", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Không thể lưu ảnh màn hình: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [System.Runtime.InteropServices.DllImport("gdi32.dll")]
+        private static extern bool DeleteObject(IntPtr hObject);
         private void ApplyStatusPalette(string state)
         {
             ellipseStatus.Fill = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}Brush");
@@ -156,11 +250,11 @@ namespace RemoteDesktopClient
             borderStatusPill.BorderBrush = (MediaBrush)System.Windows.Application.Current.FindResource($"{state}BorderBrush");
         }
 
-        private bool _isLightTheme = false;
+        private bool _isLightTheme = true;
 
-        private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+        private void ApplyTheme(bool isLight)
         {
-            _isLightTheme = !_isLightTheme;
+            _isLightTheme = isLight;
             string themeUri = _isLightTheme ? "Themes/LightTheme.xaml" : "Themes/DarkTheme.xaml";
 
             var dict = new ResourceDictionary { Source = new Uri(themeUri, UriKind.Relative) };
@@ -171,14 +265,37 @@ namespace RemoteDesktopClient
                 dictionaries[0] = dict;
 
             btnToggleTheme.Content = _isLightTheme ? "Tối" : "Sáng";
-            ApplyStatusPalette(_clientService.IsConnected ? "Success" : _clientService.IsRunning ? "Warning" : "Danger");
+            ApplyStatusPalette(_clientService != null && _clientService.IsConnected ? "Success" : _clientService != null && _clientService.IsRunning ? "Warning" : "Danger");
+        }
+
+        private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyTheme(!_isLightTheme);
+            SaveCurrentSettings();
+        }
+
+        private void SaveCurrentSettings()
+        {
+            if (_userSettings == null) return;
+
+            _userSettings.Theme = _isLightTheme ? "Light" : "Dark";
+            _userSettings.FontFamily = "SF Pro Display";
+            _userSettings.ServerIp = txtIp.Text.Trim();
+            if (int.TryParse(txtPort.Text.Trim(), out int port)) _userSettings.ServerPort = port;
+            _userSettings.Pin = txtPin.Text.Trim();
+            _userSettings.Quality = (int)sldQuality.Value;
+            _userSettings.Scale = sldScale.Value;
+            _userSettings.Fps = (int)sldFps.Value;
+
+            ConfigService.Save(_userSettings);
         }
 
         protected override void OnClosed(EventArgs e)
         {
+            SaveCurrentSettings();
             _borderOverlay?.Close();
-            _clientService.Stop();
-            _clientService.Capturer.Dispose();
+            _clientService?.Stop();
+            _clientService?.Capturer.Dispose();
             base.OnClosed(e);
         }
     }
