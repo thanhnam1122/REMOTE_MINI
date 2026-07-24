@@ -61,8 +61,20 @@ namespace RemoteDesktopServer.Services
             Log("[Server] Đã dừng TCP Listener.");
         }
 
+        private readonly HashSet<string> _connectedClientNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private string? _activeClientName;
+
         private void DisconnectCurrentClient()
         {
+            lock (_connectedClientNames)
+            {
+                if (!string.IsNullOrEmpty(_activeClientName))
+                {
+                    _connectedClientNames.Remove(_activeClientName);
+                    _activeClientName = null;
+                }
+            }
+
             if (_activeClient != null)
             {
                 try
@@ -156,6 +168,18 @@ namespace RemoteDesktopServer.Services
                     Log($"[Server Auth Failure] Sai mã PIN từ {clientEndPoint}! (PIN gửi: '{info.Pin}', PIN yêu cầu: '{ExpectedPin}')");
                     DisconnectCurrentClient();
                     return;
+                }
+
+                lock (_connectedClientNames)
+                {
+                    if (_connectedClientNames.Contains(info.ClientName))
+                    {
+                        Log($"[Server Auth Failure] Tên máy Client '{info.ClientName}' ({clientEndPoint}) đã bị trùng! Vui lòng đổi tên khác.");
+                        DisconnectCurrentClient();
+                        return;
+                    }
+                    _connectedClientNames.Add(info.ClientName);
+                    _activeClientName = info.ClientName;
                 }
 
                 Log($"[Server Auth Success] Client '{info.ClientName}' ({clientEndPoint}) đã xác thực mã PIN thành công!");

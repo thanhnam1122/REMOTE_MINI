@@ -19,12 +19,14 @@
 
     <Style x:Key="SectionEyebrowStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
     </Style>
 
     <Style x:Key="CardTitleStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="17"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
@@ -37,6 +39,7 @@
 
     <Style x:Key="InputLabelStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
         <Setter Property="Margin" Value="1,0,0,7"/>
@@ -44,12 +47,14 @@
 
     <Style x:Key="MetricLabelStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}"/>
     </Style>
 
     <Style x:Key="MetricValueStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamilySemibold}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="22"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
@@ -276,5 +281,76 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,5"/>
         <Setter Property="FontSize" Value="11"/>
+    </Style>
+
+    <!-- Modern Minimal ScrollBar Style -->
+    <Style x:Key="ScrollBarThumbStyle" TargetType="Thumb">
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="thumbBorder"
+                            Background="{DynamicResource TextTertiaryBrush}"
+                            CornerRadius="3.5"
+                            Margin="1.5"/>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="thumbBorder" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="thumbBorder" Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ScrollBarRepeatButtonStyle" TargetType="RepeatButton">
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="Transparent"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Stylus.IsPressAndHoldEnabled" Value="False"/>
+        <Setter Property="Stylus.IsFlicksEnabled" Value="False"/>
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid x:Name="Bg" Background="Transparent" SnapsToDevicePixels="True">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource ScrollBarRepeatButtonStyle}" Command="{x:Static ScrollBar.PageUpCommand}"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource ScrollBarRepeatButtonStyle}" Command="{x:Static ScrollBar.PageDownCommand}"/>
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource ScrollBarThumbStyle}"/>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter Property="Width" Value="Auto"/>
+                            <Setter Property="Height" Value="8"/>
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 </ResourceDictionary>

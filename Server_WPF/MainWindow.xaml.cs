@@ -57,6 +57,13 @@ namespace RemoteDesktopServer
                     {
                         ApplyTheme(isLight);
                     }
+                    if (txtPort != null && !txtPort.IsFocused && _userSettings.ServerPort > 0)
+                        txtPort.Text = _userSettings.ServerPort.ToString();
+                    if (txtPin != null && !txtPin.IsFocused && _userSettings.Pin != null)
+                        txtPin.Text = _userSettings.Pin;
+                    if (sldQuality != null) sldQuality.Value = _userSettings.Quality;
+                    if (sldScale != null) sldScale.Value = _userSettings.Scale;
+                    if (sldFps != null) sldFps.Value = _userSettings.Fps;
                 });
             };
 

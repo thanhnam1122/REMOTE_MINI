@@ -36,6 +36,7 @@ namespace RemoteDesktopClient.Services
         public string Host { get; set; } = "127.0.0.1";
         public int Port { get; set; } = 8888;
         public string Pin { get; set; } = "1234";
+        public string ClientName { get; set; } = "Client-01";
 
         private long _totalBytesSent;
 
@@ -45,13 +46,14 @@ namespace RemoteDesktopClient.Services
             Executor = new RemoteExecutor();
         }
 
-        public void Start(string host, int port, string pin)
+        public void Start(string host, int port, string pin, string clientName = "Client-01")
         {
             if (IsRunning) Stop();
 
             Host = host;
             Port = port;
             Pin = pin;
+            ClientName = string.IsNullOrWhiteSpace(clientName) ? "Client-01" : clientName;
             IsRunning = true;
             _cts = new CancellationTokenSource();
 
@@ -138,7 +140,7 @@ namespace RemoteDesktopClient.Services
         {
             if (_stream == null) return;
 
-            string json = $"{{\"pin\":\"{Pin}\",\"client_name\":\"WPFClient\"}}";
+            string json = $"{{\"pin\":\"{Pin}\",\"client_name\":\"{ClientName}\"}}";
             byte[] payloadBytes = Encoding.UTF8.GetBytes(json);
 
             // Header: Magic (2B) + Type (1B) + PayloadLen (4B Big-Endian) = 7 Bytes

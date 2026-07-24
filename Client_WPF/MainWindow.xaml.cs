@@ -25,6 +25,7 @@ namespace RemoteDesktopClient
 
             _userSettings = ConfigService.Load();
 
+            txtClientName.Text = string.IsNullOrWhiteSpace(_userSettings.ClientName) ? "Client-01" : _userSettings.ClientName;
             txtIp.Text = _userSettings.ServerIp;
             txtPort.Text = _userSettings.ServerPort.ToString();
             txtPin.Text = _userSettings.Pin;
@@ -45,6 +46,17 @@ namespace RemoteDesktopClient
                     {
                         ApplyTheme(isLight);
                     }
+                    if (txtClientName != null && !txtClientName.IsFocused && !string.IsNullOrWhiteSpace(_userSettings.ClientName))
+                        txtClientName.Text = _userSettings.ClientName;
+                    if (txtIp != null && !txtIp.IsFocused && !string.IsNullOrWhiteSpace(_userSettings.ServerIp))
+                        txtIp.Text = _userSettings.ServerIp;
+                    if (txtPort != null && !txtPort.IsFocused && _userSettings.ServerPort > 0)
+                        txtPort.Text = _userSettings.ServerPort.ToString();
+                    if (txtPin != null && !txtPin.IsFocused && _userSettings.Pin != null)
+                        txtPin.Text = _userSettings.Pin;
+                    if (sldQuality != null) sldQuality.Value = _userSettings.Quality;
+                    if (sldScale != null) sldScale.Value = _userSettings.Scale;
+                    if (sldFps != null) sldFps.Value = _userSettings.Fps;
                 });
             };
 
@@ -65,6 +77,13 @@ namespace RemoteDesktopClient
             }
             else
             {
+                string clientName = txtClientName.Text.Trim();
+                if (string.IsNullOrEmpty(clientName))
+                {
+                    WpfMessageBox.Show("Vui lòng nhập Tên máy Client!", "Lỗi nhập liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 string ip = txtIp.Text.Trim();
                 if (!int.TryParse(txtPort.Text.Trim(), out int port))
                 {
@@ -82,7 +101,7 @@ namespace RemoteDesktopClient
                 // Apply initial settings from UI sliders
                 _clientService.Capturer.UpdateSettings((int)sldQuality.Value, sldScale.Value, (int)sldFps.Value);
                 SaveCurrentSettings();
-                _clientService.Start(ip, port, pin);
+                _clientService.Start(ip, port, pin, clientName);
             }
         }
 
@@ -268,6 +287,7 @@ namespace RemoteDesktopClient
 
             _userSettings.Theme = _isLightTheme ? "Light" : "Dark";
             _userSettings.FontFamily = "SF Pro Display";
+            if (txtClientName != null && !string.IsNullOrWhiteSpace(txtClientName.Text)) _userSettings.ClientName = txtClientName.Text.Trim();
             _userSettings.ServerIp = txtIp.Text.Trim();
             if (int.TryParse(txtPort.Text.Trim(), out int port)) _userSettings.ServerPort = port;
             _userSettings.Pin = txtPin.Text.Trim();
@@ -277,58 +297,6 @@ namespace RemoteDesktopClient
 
             ConfigService.Save(_userSettings);
         }
-
-        #region Fullscreen Toggle
-
-        private bool _isFullscreen = false;
-        private WindowStyle _prevWindowStyle = WindowStyle.SingleBorderWindow;
-        private WindowState _prevWindowState = WindowState.Normal;
-        private ResizeMode _prevResizeMode = ResizeMode.CanResize;
-
-        private void ToggleFullscreen()
-        {
-            if (!_isFullscreen)
-            {
-                _prevWindowStyle = this.WindowStyle;
-                _prevWindowState = this.WindowState;
-                _prevResizeMode = this.ResizeMode;
-
-                this.WindowStyle = WindowStyle.None;
-                this.WindowState = WindowState.Normal;
-                this.WindowState = WindowState.Maximized;
-                this.ResizeMode = ResizeMode.NoResize;
-                _isFullscreen = true;
-
-                if (btnToggleFullscreen != null) btnToggleFullscreen.Content = "Thoát Toàn màn hình";
-            }
-            else
-            {
-                this.WindowStyle = _prevWindowStyle;
-                this.WindowState = _prevWindowState;
-                this.ResizeMode = _prevResizeMode;
-                _isFullscreen = false;
-
-                if (btnToggleFullscreen != null) btnToggleFullscreen.Content = "Toàn màn hình";
-            }
-        }
-
-        private void BtnToggleFullscreen_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleFullscreen();
-        }
-
-        protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == System.Windows.Input.Key.F11 || (e.Key == System.Windows.Input.Key.Escape && _isFullscreen))
-            {
-                ToggleFullscreen();
-                e.Handled = true;
-                return;
-            }
-            base.OnPreviewKeyDown(e);
-        }
-
-        #endregion
 
         protected override void OnClosed(EventArgs e)
         {

@@ -6,6 +6,7 @@ namespace RemoteDesktopServer.Services
         public string FontFamily { get; set; } = "SF Pro Display";
         public int ServerPort { get; set; } = 5000;
         public string Pin { get; set; } = "123456";
+        public string ClientName { get; set; } = "Client-01";
         public int Quality { get; set; } = 100;
         public double Scale { get; set; } = 1.00;
         public int Fps { get; set; } = 120;

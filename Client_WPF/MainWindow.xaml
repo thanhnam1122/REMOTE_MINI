@@ -75,18 +75,6 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                    <Button x:Name="btnScreenshot"
-                            Content="Chụp màn hình"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Margin="0,0,10,0"
-                            Click="BtnScreenshot_Click"
-                            ToolTip="Chụp và lưu màn hình máy này"/>
-                    <Button x:Name="btnToggleFullscreen"
-                            Content="Toàn màn hình"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Margin="0,0,10,0"
-                            Click="BtnToggleFullscreen_Click"
-                            ToolTip="Bật/tắt chế độ toàn màn hình (F11 hoặc Esc để thoát)"/>
                     <Button x:Name="btnToggleTheme"
                             Content="Sáng"
                             Width="68"
@@ -141,6 +129,9 @@
                                    Style="{StaticResource BodyTextStyle}"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,16"/>
+
+                        <TextBlock Text="TÊN THIẾT BỊ CLIENT" Style="{StaticResource InputLabelStyle}"/>
+                        <TextBox x:Name="txtClientName" Text="Client-01" Style="{StaticResource TextInputStyle}" Margin="0,0,0,12"/>
 
                         <TextBlock Text="ĐỊA CHỈ IP MÁY CHỦ" Style="{StaticResource InputLabelStyle}"/>
                         <TextBox x:Name="txtIp" Text="127.0.0.1" Style="{StaticResource TextInputStyle}" Margin="0,0,0,12"/>
