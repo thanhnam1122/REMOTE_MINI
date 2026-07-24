@@ -159,6 +159,7 @@ namespace RemoteDesktopClient.Services
         private async Task StreamFramesAsync(CancellationToken token)
         {
             Log($"[Capture] Đang dùng {Capturer.BackendName}.");
+            Capturer.ResetState();
             Capturer.RequestKeyframe();
             Stopwatch sw = Stopwatch.StartNew();
             long lastStatTime = sw.ElapsedMilliseconds;

@@ -183,6 +183,21 @@ namespace RemoteDesktopClient.Services
         {
             lock (_settingsLock)
             {
+                _previousTileHashes = null;
+                _appliedCaptureVersion = -1;
+                _captureVersion++;
+            }
+        }
+
+        public void ResetState()
+        {
+            lock (_settingsLock)
+            {
+                _previousTileHashes = null;
+                _previousTileColumns = 0;
+                _previousTileRows = 0;
+                _appliedCaptureVersion = -1;
+                _forceKeyframeCounter = 0;
                 _captureVersion++;
             }
         }

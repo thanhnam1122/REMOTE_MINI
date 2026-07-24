@@ -141,7 +141,7 @@ namespace RemoteDesktopServer
             Dispatcher.Invoke(() =>
             {
                 UpdateStatusUI(false, "Chờ Client kết nối...");
-                overlayPlaceholder.Visibility = Visibility.Collapsed;
+                overlayPlaceholder.Visibility = Visibility.Visible;
                 imgViewport.Source = null;
                 _screenBitmap = null;
                 txtFps.Text = "0.0";
