@@ -245,16 +245,8 @@ namespace RemoteDesktopClient.Services
 
                     if (capturedBitmap == null)
                     {
-                        bool needKeyframe = _previousTileHashes == null || _appliedCaptureVersion != captureVersion;
-                        if (needKeyframe)
-                        {
-                            capturedBitmap = CaptureScreen(screenBounds, targetWidth, targetHeight);
-                            ownsCapturedBitmap = false;
-                        }
-                        else
-                        {
-                            return (null, (ushort)originalWidth, (ushort)originalHeight, 0);
-                        }
+                        capturedBitmap = CaptureScreen(screenBounds, targetWidth, targetHeight);
+                        ownsCapturedBitmap = false;
                     }
 
                     try
