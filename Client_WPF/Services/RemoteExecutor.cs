@@ -32,6 +32,7 @@ namespace RemoteDesktopClient.Services
         private const uint MOUSEEVENTF_WHEEL = 0x0800;
 
         private const uint KEYEVENTF_KEYDOWN = 0x0000;
+        private const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
         private const uint KEYEVENTF_KEYUP = 0x0002;
 
         #endregion
@@ -75,6 +76,28 @@ namespace RemoteDesktopClient.Services
             { "f10", (byte)Keys.F10 },
             { "f11", (byte)Keys.F11 },
             { "f12", (byte)Keys.F12 },
+            { "0", (byte)Keys.D0 },
+            { "1", (byte)Keys.D1 },
+            { "2", (byte)Keys.D2 },
+            { "3", (byte)Keys.D3 },
+            { "4", (byte)Keys.D4 },
+            { "5", (byte)Keys.D5 },
+            { "6", (byte)Keys.D6 },
+            { "7", (byte)Keys.D7 },
+            { "8", (byte)Keys.D8 },
+            { "9", (byte)Keys.D9 },
+            { ",", (byte)Keys.Oemcomma },
+            { ".", (byte)Keys.OemPeriod },
+            { "/", (byte)Keys.OemQuestion },
+            { "-", (byte)Keys.OemMinus },
+            { "+", (byte)Keys.Oemplus },
+            { "=", (byte)Keys.Oemplus },
+            { ";", (byte)Keys.OemSemicolon },
+            { "'", (byte)Keys.OemQuotes },
+            { "[", (byte)Keys.OemOpenBrackets },
+            { "]", (byte)Keys.OemCloseBrackets },
+            { "\\", (byte)Keys.OemBackslash },
+            { "`", (byte)Keys.Oemtilde },
         };
 
         public void ExecuteCommand(string jsonCommand)
@@ -98,46 +121,40 @@ namespace RemoteDesktopClient.Services
                     ExecuteKeyboard(root);
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[RemoteExecutor Error] {ex.Message}");
-            }
+            catch { }
         }
 
         private void ExecuteMouse(JsonElement root)
         {
             string action = root.TryGetProperty("action", out var actElem) ? actElem.GetString() ?? "" : "";
+            double normX = root.TryGetProperty("x", out var xElem) ? xElem.GetDouble() : 0;
+            double normY = root.TryGetProperty("y", out var yElem) ? yElem.GetDouble() : 0;
             string button = root.TryGetProperty("button", out var btnElem) ? btnElem.GetString() ?? "left" : "left";
-            double normX = root.TryGetProperty("x", out var xElem) ? xElem.GetDouble() : 0.0;
-            double normY = root.TryGetProperty("y", out var yElem) ? yElem.GetDouble() : 0.0;
             int delta = root.TryGetProperty("delta", out var dElem) ? dElem.GetInt32() : 0;
 
-            int screenW = Screen.PrimaryScreen?.Bounds.Width ?? 1920;
-            int screenH = Screen.PrimaryScreen?.Bounds.Height ?? 1080;
+            Rectangle primaryScreen = System.Windows.Forms.Screen.PrimaryScreen?.Bounds ?? new Rectangle(0, 0, 1920, 1080);
+            int screenX = (int)Math.Round(normX * primaryScreen.Width);
+            int screenY = (int)Math.Round(normY * primaryScreen.Height);
 
-            int targetX = (int)Math.Clamp(Math.Round(normX * screenW), 0, screenW - 1);
-            int targetY = (int)Math.Clamp(Math.Round(normY * screenH), 0, screenH - 1);
+            SetCursorPos(screenX, screenY);
 
-            SetCursorPos(targetX, targetY);
+            uint downFlag = MOUSEEVENTF_LEFTDOWN;
+            uint upFlag = MOUSEEVENTF_LEFTUP;
 
-            uint downFlag = button.ToLowerInvariant() switch
+            if (button.Equals("right", StringComparison.OrdinalIgnoreCase))
             {
-                "right" => MOUSEEVENTF_RIGHTDOWN,
-                "middle" => MOUSEEVENTF_MIDDLEDOWN,
-                _ => MOUSEEVENTF_LEFTDOWN
-            };
-
-            uint upFlag = button.ToLowerInvariant() switch
+                downFlag = MOUSEEVENTF_RIGHTDOWN;
+                upFlag = MOUSEEVENTF_RIGHTUP;
+            }
+            else if (button.Equals("middle", StringComparison.OrdinalIgnoreCase))
             {
-                "right" => MOUSEEVENTF_RIGHTUP,
-                "middle" => MOUSEEVENTF_MIDDLEUP,
-                _ => MOUSEEVENTF_LEFTUP
-            };
+                downFlag = MOUSEEVENTF_MIDDLEDOWN;
+                upFlag = MOUSEEVENTF_MIDDLEUP;
+            }
 
             switch (action.ToLowerInvariant())
             {
                 case "move":
-                    // SetCursorPos is sufficient
                     break;
 
                 case "down":
@@ -176,21 +193,30 @@ namespace RemoteDesktopClient.Services
             byte vk = GetVirtualKeyCode(key);
             if (vk == 0) return;
 
+            uint extendedFlag = IsExtendedKey(vk) ? KEYEVENTF_EXTENDEDKEY : 0;
+
             switch (action.ToLowerInvariant())
             {
                 case "down":
-                    keybd_event(vk, 0, KEYEVENTF_KEYDOWN, UIntPtr.Zero);
+                    keybd_event(vk, 0, KEYEVENTF_KEYDOWN | extendedFlag, UIntPtr.Zero);
                     break;
 
                 case "up":
-                    keybd_event(vk, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+                    keybd_event(vk, 0, KEYEVENTF_KEYUP | extendedFlag, UIntPtr.Zero);
                     break;
 
                 case "press":
-                    keybd_event(vk, 0, KEYEVENTF_KEYDOWN, UIntPtr.Zero);
-                    keybd_event(vk, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+                    keybd_event(vk, 0, KEYEVENTF_KEYDOWN | extendedFlag, UIntPtr.Zero);
+                    keybd_event(vk, 0, KEYEVENTF_KEYUP | extendedFlag, UIntPtr.Zero);
                     break;
             }
+        }
+
+        private static bool IsExtendedKey(byte vk)
+        {
+            return vk == (byte)Keys.Left || vk == (byte)Keys.Up || vk == (byte)Keys.Right || vk == (byte)Keys.Down ||
+                   vk == (byte)Keys.Insert || vk == (byte)Keys.Delete || vk == (byte)Keys.Home || vk == (byte)Keys.End ||
+                   vk == (byte)Keys.Prior || vk == (byte)Keys.Next || vk == (byte)Keys.LWin || vk == (byte)Keys.RWin;
         }
 
         private byte GetVirtualKeyCode(string key)
@@ -205,6 +231,11 @@ namespace RemoteDesktopClient.Services
                 char ch = key[0];
                 short scan = VkKeyScan(ch);
                 return (byte)(scan & 0xFF);
+            }
+
+            if (Enum.TryParse<Keys>(key, true, out Keys parsedKey))
+            {
+                return (byte)parsedKey;
             }
 
             return 0;
