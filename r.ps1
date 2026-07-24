@@ -65,7 +65,7 @@ function Start-RemoteMini {
         -PassThru
 
     Write-Host ''
-    Write-Host 'Remote Mini is running with 100% WPF .NET 8 (Server WPF + Client WPF).' -ForegroundColor Green
+    Write-Host 'Remote Mini is running with 100% WPF .NET 9 (Server WPF + Client WPF).' -ForegroundColor Green
     Write-Host "Server PID: $($serverProcess.Id)"
     Write-Host "Client PID: $($clientProcess.Id)"
 }

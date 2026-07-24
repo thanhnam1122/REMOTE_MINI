@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 > nul
 echo ========================================================
-echo   KHOI CHAY REMOTE DESKTOP SERVER (WPF .NET 8)
+echo   KHOI CHAY REMOTE DESKTOP SERVER (WPF .NET 9)
 echo ========================================================
 echo.
 

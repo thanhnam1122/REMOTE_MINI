@@ -16,4 +16,4 @@ echo 2. Dang khoi chay Client (.NET WPF)...
 start "" "run_client.bat"
 
 echo.
-echo Da khoi chay xong ca 2 ung dung 100%% WPF .NET 8!
+echo Da khoi chay xong ca 2 ung dung 100%% WPF .NET !

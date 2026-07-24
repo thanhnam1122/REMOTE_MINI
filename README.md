@@ -1,7 +1,7 @@
 # ĐỀ TÀI: ĐIỀU KHIỂN MÁY TÍNH TỪ XA ĐƠN GIẢN (REMOTE DESKTOP MINI)
 
 > **NHÓM THỰC HIỆN**: Thành Nam, Minh Hoàng, Tấn Phước  
-> **CÔNG NGHỆ BÁO CÁO**: 100% C# .NET 8 WPF (Server: WPF & Client: WPF)  
+> **CÔNG NGHỆ BÁO CÁO**: 100% C# .NET 9 WPF (Server: WPF & Client: WPF)  
 > **GIAO THỨC TRUYỀN THÔNG**: TCP Socket Binary Framing Protocol
 
 ---
@@ -9,7 +9,7 @@
 ## I. MỤC ĐÍCH & TÌNH HUỐNG THỰC TẾ
 
 1. **Mục đích**:
-   - Xây dựng phiên bản thu nhỏ của phần mềm điều khiển từ xa (tương tự TeamViewer / Anydesk) viết **100% bằng WPF C# .NET 8**.
+   - Xây dựng phiên bản thu nhỏ của phần mềm điều khiển từ xa (tương tự TeamViewer / Anydesk) viết **100% bằng WPF C# .NET 9**.
    - Cho phép chụp ảnh màn hình máy bị điều khiển (**Client - WPF**) liên tục với độ nén JPEG tùy chỉnh và truyền luồng ảnh byte stream qua TCP Socket về máy điều khiển (**Server - WPF**).
    - Truyền ngược tọa độ click chuột, thao tác kéo thả, cuộn chuột và phím bấm từ Server về Client để tương tác điều khiển trực tiếp qua Win32 API (`SendInput` / `SetCursorPos`).
 
@@ -22,7 +22,7 @@
 
 ```
 +------------------------------------+             TCP Socket Connection             +--------------------------------------+
-|          Server (.NET 8 WPF)       | <===========================================> |         Client (.NET 8 WPF)          |
+|          Server (.NET 9 WPF)       | <===========================================> |         Client (.NET 9 WPF)          |
 |          (Máy Điều Khiển)          |                                               |           (Máy Bị Điều Khiển)        |
 +------------------------------------+                                               +--------------------------------------+
 | - Custom Modern WPF Dark Theme UI  | --- Config / Input Commands (JSON Packet) --> | - Modern WPF Dashboard & Controls    |
@@ -67,7 +67,7 @@ REMOTE_MINI/
 │   │   ├── ScreenCapturer.cs       # Chụp màn hình GDI+ & nén JPEG siêu tốc
 │   │   ├── RemoteExecutor.cs       # Giả lập chuột & phím bằng Win32 API
 │   │   └── NetworkClientService.cs # Socket TCP Client multithreaded async
-│   └── RemoteDesktopClient.csproj  # WPF Project file (.NET 8)
+│   └── RemoteDesktopClient.csproj  # WPF Project file (.NET 9)
 │
 ├── Server_WPF/                     # Ứng dụng Server WPF (Máy điều khiển)
 │   ├── App.xaml / App.xaml.cs      # Entry point & Visual Resource Dictionary
@@ -75,7 +75,7 @@ REMOTE_MINI/
 │   ├── Models/PacketProtocol.cs    # Binary Framing Protocol
 │   ├── Helpers/WpfCoordinateMapper.cs # Thuật toán tính tọa độ chuẩn hóa WPF
 │   ├── Services/TcpServerService.cs# Async TCP Listener
-│   └── RemoteDesktopServer.csproj  # WPF Project file (.NET 8)
+│   └── RemoteDesktopServer.csproj  # WPF Project file (.NET 9)
 │
 ├── build_client.bat                # Script biên dịch Client WPF
 ├── build_server.bat                # Script biên dịch Server WPF
