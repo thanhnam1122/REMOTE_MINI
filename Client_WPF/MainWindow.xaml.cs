@@ -15,7 +15,6 @@ namespace RemoteDesktopClient
     public partial class MainWindow : Window
     {
         private readonly NetworkClientService _clientService;
-        private YellowBorderOverlay? _borderOverlay;
         private UserSettings _userSettings;
 
         public MainWindow()
@@ -127,27 +126,16 @@ namespace RemoteDesktopClient
                 {
                     ApplyStatusPalette("Success");
                     btnConnect.Content = "Ngắt kết nối";
-
-                    // Show native glowing yellow screen-sharing border
-                    if (_borderOverlay == null)
-                    {
-                        _borderOverlay = new YellowBorderOverlay();
-                    }
-                    _borderOverlay.Show();
                 }
                 else if (_clientService.IsRunning)
                 {
                     ApplyStatusPalette("Warning");
                     btnConnect.Content = "Hủy kết nối";
-
-                    _borderOverlay?.Hide();
                 }
                 else
                 {
                     ApplyStatusPalette("Danger");
                     btnConnect.Content = "Kết nối và chia sẻ";
-
-                    _borderOverlay?.Hide();
                 }
             });
         }
@@ -290,10 +278,61 @@ namespace RemoteDesktopClient
             ConfigService.Save(_userSettings);
         }
 
+        #region Fullscreen Toggle
+
+        private bool _isFullscreen = false;
+        private WindowStyle _prevWindowStyle = WindowStyle.SingleBorderWindow;
+        private WindowState _prevWindowState = WindowState.Normal;
+        private ResizeMode _prevResizeMode = ResizeMode.CanResize;
+
+        private void ToggleFullscreen()
+        {
+            if (!_isFullscreen)
+            {
+                _prevWindowStyle = this.WindowStyle;
+                _prevWindowState = this.WindowState;
+                _prevResizeMode = this.ResizeMode;
+
+                this.WindowStyle = WindowStyle.None;
+                this.WindowState = WindowState.Normal;
+                this.WindowState = WindowState.Maximized;
+                this.ResizeMode = ResizeMode.NoResize;
+                _isFullscreen = true;
+
+                if (btnToggleFullscreen != null) btnToggleFullscreen.Content = "Thoát Toàn màn hình";
+            }
+            else
+            {
+                this.WindowStyle = _prevWindowStyle;
+                this.WindowState = _prevWindowState;
+                this.ResizeMode = _prevResizeMode;
+                _isFullscreen = false;
+
+                if (btnToggleFullscreen != null) btnToggleFullscreen.Content = "Toàn màn hình";
+            }
+        }
+
+        private void BtnToggleFullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleFullscreen();
+        }
+
+        protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.F11 || (e.Key == System.Windows.Input.Key.Escape && _isFullscreen))
+            {
+                ToggleFullscreen();
+                e.Handled = true;
+                return;
+            }
+            base.OnPreviewKeyDown(e);
+        }
+
+        #endregion
+
         protected override void OnClosed(EventArgs e)
         {
             SaveCurrentSettings();
-            _borderOverlay?.Close();
             _clientService?.Stop();
             _clientService?.Capturer.Dispose();
             base.OnClosed(e);

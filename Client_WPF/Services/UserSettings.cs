@@ -5,8 +5,8 @@ namespace RemoteDesktopClient.Services
         public string Theme { get; set; } = "Light";
         public string FontFamily { get; set; } = "SF Pro Display";
         public string ServerIp { get; set; } = "127.0.0.1";
-        public int ServerPort { get; set; } = 5000;
-        public string Pin { get; set; } = "123456";
+        public int ServerPort { get; set; } = 8888;
+        public string Pin { get; set; } = "1234";
         public int Quality { get; set; } = 100;
         public double Scale { get; set; } = 1.00;
         public int Fps { get; set; } = 120;

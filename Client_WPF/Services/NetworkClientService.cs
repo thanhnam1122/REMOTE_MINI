@@ -41,7 +41,7 @@ namespace RemoteDesktopClient.Services
 
         public NetworkClientService()
         {
-            Capturer = new ScreenCapturer(quality: 65, scale: 0.5, targetFps: 60);
+            Capturer = new ScreenCapturer(quality: 100, scale: 1.0, targetFps: 120);
             Executor = new RemoteExecutor();
         }
 

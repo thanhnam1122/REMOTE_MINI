@@ -125,6 +125,14 @@ namespace RemoteDesktopServer
                 UpdateStatusUI(true, $"Đã kết nối: {clientName}");
                 overlayPlaceholder.Visibility = Visibility.Collapsed;
                 _screenBitmap = null;
+
+                if (sldQuality != null && sldScale != null && sldFps != null)
+                {
+                    int quality = (int)sldQuality.Value;
+                    double scale = sldScale.Value;
+                    int fpsLimit = (int)sldFps.Value;
+                    _serverService.SendConfigCommand(quality, scale, fpsLimit);
+                }
             });
         }
 
@@ -347,6 +355,146 @@ namespace RemoteDesktopServer
             ConfigService.Save(_userSettings);
         }
 
+        #region Fullscreen Toggle
+
+        private bool _isFullscreen = false;
+        private WindowStyle _prevWindowStyle = WindowStyle.SingleBorderWindow;
+        private WindowState _prevWindowState = WindowState.Normal;
+        private ResizeMode _prevResizeMode = ResizeMode.CanResize;
+
+        private MediaBrush? _origWindowBg;
+        private MediaBrush? _origRootGridBg;
+        private MediaBrush? _origCardRemoteBg;
+        private MediaBrush? _origViewportBorderBg;
+        private MediaBrush? _origViewportGridBg;
+
+        private void ToggleFullscreen()
+        {
+            if (!_isFullscreen)
+            {
+                _prevWindowStyle = this.WindowStyle;
+                _prevWindowState = this.WindowState;
+                _prevResizeMode = this.ResizeMode;
+
+                _origWindowBg = this.Background;
+                _origRootGridBg = rootGrid?.Background;
+                _origCardRemoteBg = cardRemoteScreen?.Background;
+                _origViewportBorderBg = viewportBorder?.Background;
+                _origViewportGridBg = viewportGrid?.Background;
+
+                this.Background = System.Windows.Media.Brushes.Black;
+                if (rootGrid != null) rootGrid.Background = System.Windows.Media.Brushes.Black;
+                if (cardRemoteScreen != null) cardRemoteScreen.Background = System.Windows.Media.Brushes.Black;
+                if (viewportBorder != null) viewportBorder.Background = System.Windows.Media.Brushes.Black;
+                if (viewportGrid != null) viewportGrid.Background = System.Windows.Media.Brushes.Black;
+
+                this.WindowStyle = WindowStyle.None;
+                this.WindowState = WindowState.Normal;
+                this.WindowState = WindowState.Maximized;
+                this.ResizeMode = ResizeMode.NoResize;
+
+                if (borderProductBar != null) borderProductBar.Visibility = Visibility.Collapsed;
+                if (gridWorkspace != null) gridWorkspace.Margin = new Thickness(0);
+                if (colRightSidebar != null) colRightSidebar.Width = new GridLength(0);
+                if (colRightSidebarGap != null) colRightSidebarGap.Width = new GridLength(0);
+                if (rowStreamSettings != null) rowStreamSettings.Height = new GridLength(0);
+                if (rowStreamSettingsGap != null) rowStreamSettingsGap.Height = new GridLength(0);
+                if (rowHeaderRemoteScreen != null) rowHeaderRemoteScreen.Height = new GridLength(0);
+                if (headerRemoteScreen != null) headerRemoteScreen.Visibility = Visibility.Collapsed;
+                if (cardRemoteScreen != null)
+                {
+                    cardRemoteScreen.Padding = new Thickness(0);
+                    cardRemoteScreen.CornerRadius = new CornerRadius(0);
+                    cardRemoteScreen.BorderThickness = new Thickness(0);
+                }
+                if (cardStreamSettings != null) cardStreamSettings.Visibility = Visibility.Collapsed;
+                if (viewportBorder != null)
+                {
+                    viewportBorder.Margin = new Thickness(0);
+                    viewportBorder.CornerRadius = new CornerRadius(0);
+                    viewportBorder.BorderThickness = new Thickness(0);
+                }
+                if (pnlFloatingBar != null) pnlFloatingBar.Visibility = Visibility.Visible;
+
+                _isFullscreen = true;
+
+                if (btnToggleFullscreen != null) btnToggleFullscreen.Content = "Thoát Toàn màn hình";
+                if (btnToggleFullscreenTop != null) btnToggleFullscreenTop.Content = "Thoát Toàn màn hình";
+            }
+            else
+            {
+                this.WindowStyle = _prevWindowStyle;
+                this.WindowState = _prevWindowState;
+                this.ResizeMode = _prevResizeMode;
+
+                if (_origWindowBg != null) this.Background = _origWindowBg;
+                else this.SetResourceReference(BackgroundProperty, "AppBackgroundBrush");
+
+                if (rootGrid != null)
+                {
+                    if (_origRootGridBg != null) rootGrid.Background = _origRootGridBg;
+                    else rootGrid.SetResourceReference(System.Windows.Controls.Grid.BackgroundProperty, "AppBackgroundBrush");
+                }
+
+                if (cardRemoteScreen != null)
+                {
+                    if (_origCardRemoteBg != null) cardRemoteScreen.Background = _origCardRemoteBg;
+                    else cardRemoteScreen.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "SurfaceBrush");
+                    cardRemoteScreen.Padding = new Thickness(0);
+                    cardRemoteScreen.CornerRadius = new CornerRadius(16);
+                    cardRemoteScreen.BorderThickness = new Thickness(1);
+                }
+
+                if (viewportBorder != null)
+                {
+                    if (_origViewportBorderBg != null) viewportBorder.Background = _origViewportBorderBg;
+                    else viewportBorder.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "ViewportGradientBrush");
+                    viewportBorder.Margin = new Thickness(12, 0, 12, 12);
+                    viewportBorder.CornerRadius = new CornerRadius(12);
+                    viewportBorder.BorderThickness = new Thickness(1);
+                }
+
+                if (viewportGrid != null && _origViewportGridBg != null)
+                {
+                    viewportGrid.Background = _origViewportGridBg;
+                }
+
+                if (borderProductBar != null) borderProductBar.Visibility = Visibility.Visible;
+                if (gridWorkspace != null) gridWorkspace.Margin = new Thickness(22);
+                if (colRightSidebar != null) colRightSidebar.Width = new GridLength(356);
+                if (colRightSidebarGap != null) colRightSidebarGap.Width = new GridLength(16);
+                if (rowStreamSettings != null) rowStreamSettings.Height = new GridLength(184);
+                if (rowStreamSettingsGap != null) rowStreamSettingsGap.Height = new GridLength(16);
+                if (rowHeaderRemoteScreen != null) rowHeaderRemoteScreen.Height = new GridLength(62);
+                if (headerRemoteScreen != null) headerRemoteScreen.Visibility = Visibility.Visible;
+                if (cardStreamSettings != null) cardStreamSettings.Visibility = Visibility.Visible;
+                if (pnlFloatingBar != null) pnlFloatingBar.Visibility = Visibility.Collapsed;
+
+                _isFullscreen = false;
+
+                if (btnToggleFullscreen != null) btnToggleFullscreen.Content = "Toàn màn hình";
+                if (btnToggleFullscreenTop != null) btnToggleFullscreenTop.Content = "Toàn màn hình";
+            }
+        }
+
+        private void BtnToggleFullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleFullscreen();
+        }
+
+        protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.F11 || (e.Key == Key.Escape && _isFullscreen))
+            {
+                ToggleFullscreen();
+                e.Handled = true;
+                return;
+            }
+            base.OnPreviewKeyDown(e);
+        }
+
+        #endregion
+
         #region Viewport Mouse & Keyboard Interactivity
 
         private void ImgViewport_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -435,6 +583,13 @@ namespace RemoteDesktopServer
 
         private void Viewport_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (e.Key == Key.F11 || (e.Key == Key.Escape && _isFullscreen))
+            {
+                ToggleFullscreen();
+                e.Handled = true;
+                return;
+            }
+
             if (!_serverService.IsClientConnected) return;
 
             string keyStr = MapWpfKeyToString(e.Key == Key.System ? e.SystemKey : e.Key);
@@ -503,22 +658,38 @@ namespace RemoteDesktopServer
             _serverService.SendConfigCommand(quality, scale, fpsLimit);
         }
 
+        private void ApplyConfigLive()
+        {
+            if (sldQuality == null || sldScale == null || sldFps == null) return;
+            int quality = (int)sldQuality.Value;
+            double scale = sldScale.Value;
+            int fpsLimit = (int)sldFps.Value;
+            SaveCurrentSettings();
+            if (_serverService != null && _serverService.IsClientConnected)
+            {
+                _serverService.SendConfigCommand(quality, scale, fpsLimit);
+            }
+        }
+
         private void SldQuality_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (txtQualityVal != null)
                 txtQualityVal.Text = $"{(int)e.NewValue}%";
+            ApplyConfigLive();
         }
 
         private void SldScale_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (txtScaleVal != null)
                 txtScaleVal.Text = $"{e.NewValue:F2}x";
+            ApplyConfigLive();
         }
 
         private void SldFps_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (txtFpsVal != null)
                 txtFpsVal.Text = $"{(int)e.NewValue} FPS";
+            ApplyConfigLive();
         }
 
         private void BtnClearLog_Click(object sender, RoutedEventArgs e)

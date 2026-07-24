@@ -11,14 +11,15 @@
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True">
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
+    <Grid x:Name="rootGrid" Background="{DynamicResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="76"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Product bar -->
-        <Border Grid.Row="0"
+        <Border x:Name="borderProductBar"
+                Grid.Row="0"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
@@ -81,6 +82,12 @@
                             Margin="0,0,10,0"
                             Click="BtnScreenshot_Click"
                             ToolTip="Chụp và lưu hình ảnh màn hình từ xa"/>
+                    <Button x:Name="btnToggleFullscreenTop"
+                            Content="Toàn màn hình"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="0,0,10,0"
+                            Click="BtnToggleFullscreen_Click"
+                            ToolTip="Bật/tắt chế độ toàn màn hình (F11 hoặc Esc để thoát)"/>
                     <Button x:Name="btnToggleTheme"
                             Content="Sáng"
                             Width="68"
@@ -92,29 +99,29 @@
         </Border>
 
         <!-- Workspace -->
-        <Grid Grid.Row="1" Margin="22">
+        <Grid x:Name="gridWorkspace" Grid.Row="1" Margin="22">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="356"/>
+                <ColumnDefinition x:Name="colRightSidebarGap" Width="16"/>
+                <ColumnDefinition x:Name="colRightSidebar" Width="356"/>
             </Grid.ColumnDefinitions>
 
             <!-- Remote screen and stream controls -->
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="16"/>
-                    <RowDefinition Height="184"/>
+                    <RowDefinition x:Name="rowStreamSettingsGap" Height="16"/>
+                    <RowDefinition x:Name="rowStreamSettings" Height="184"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="0">
+                <Border x:Name="cardRemoteScreen" Grid.Row="0" Style="{StaticResource CardStyle}" Padding="0">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="62"/>
+                            <RowDefinition x:Name="rowHeaderRemoteScreen" Height="62"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Grid Margin="18,0">
+                        <Grid x:Name="headerRemoteScreen" Margin="18,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -126,6 +133,13 @@
                                            Margin="0,2,0,0"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="btnToggleFullscreen"
+                                        Content="Toàn màn hình"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Padding="12,6"
+                                        Margin="0,0,10,0"
+                                        Click="BtnToggleFullscreen_Click"
+                                        ToolTip="Bật/tắt chế độ toàn màn hình (F11 hoặc Esc để thoát)"/>
                                 <Button x:Name="btnScreenshot"
                                         Content="Chụp màn hình"
                                         Style="{StaticResource SecondaryButtonStyle}"
@@ -168,21 +182,22 @@
                                        MouseWheel="ImgViewport_MouseWheel"/>
 
                                 <Border x:Name="overlayPlaceholder"
-                                        Background="{DynamicResource ViewportGradientBrush}">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                MaxWidth="440">
-                                        <Grid Width="72" Height="72" Margin="0,0,0,18">
-                                            <Ellipse Fill="{DynamicResource AccentSoftBrush}"/>
-                                            <Path Data="M17,21 L55,21 L55,45 L17,45 Z M28,53 L44,53 M36,45 L36,53"
-                                                  Stroke="{DynamicResource AccentBrush}"
-                                                  StrokeThickness="2.4"
-                                                  StrokeStartLineCap="Round"
-                                                  StrokeEndLineCap="Round"/>
-                                        </Grid>
-                                        <TextBlock Text="Chưa có phiên điều khiển"
-                                                   FontFamily="Segoe UI Semibold"
-                                                   FontSize="20"
+                                        Background="#CC111A1C"
+                                        CornerRadius="12">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Path Data="M1,1 L31,1 L31,21 L1,21 Z M10,27 L22,27 M16,21 L16,27"
+                                              Width="44"
+                                              Height="40"
+                                              Stroke="{DynamicResource ConsoleTextBrush}"
+                                              StrokeThickness="2"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              HorizontalAlignment="Center"
+                                              Margin="0,0,0,14"/>
+                                        <TextBlock Text="Đang chờ kết nối từ xa..."
+                                                   Foreground="{DynamicResource ConsoleTextBrush}"
+                                                   FontFamily="{DynamicResource AppFontFamilySemibold}"
+                                                   FontSize="18"
                                                    HorizontalAlignment="Center"/>
                                         <TextBlock Text="Mở ứng dụng Client trên máy cần hỗ trợ, sau đó nhập IP, cổng và PIN ở bảng bên phải."
                                                    Style="{StaticResource BodyTextStyle}"
@@ -197,7 +212,7 @@
                     </Grid>
                 </Border>
 
-                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="18,15">
+                <Border x:Name="cardStreamSettings" Grid.Row="2" Style="{StaticResource CardStyle}" Padding="18,15">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -364,5 +379,32 @@
                 </Border>
             </Grid>
         </Grid>
+
+        <!-- Floating overlay bar when in Fullscreen -->
+        <Border x:Name="pnlFloatingBar"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,12,0,0"
+                Background="#E6111A1C"
+                BorderBrush="{DynamicResource BorderStrongBrush}"
+                BorderThickness="1"
+                CornerRadius="20"
+                Padding="16,7"
+                Panel.ZIndex="999"
+                Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Đang ở chế độ Toàn màn hình (Esc hoặc F11 để thoát)"
+                           Foreground="{DynamicResource ConsoleTextBrush}"
+                           FontFamily="{DynamicResource AppFontFamilySemibold}"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Margin="0,0,14,0"/>
+                <Button Content="Thoát Toàn màn hình"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Padding="12,5"
+                        FontSize="11"
+                        Click="BtnToggleFullscreen_Click"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

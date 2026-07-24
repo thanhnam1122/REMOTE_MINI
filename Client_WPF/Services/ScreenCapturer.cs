@@ -137,7 +137,7 @@ namespace RemoteDesktopClient.Services
             set { lock (_settingsLock) _targetFps = Math.Clamp(value, 5, 120); }
         }
 
-        public ScreenCapturer(int quality = 65, double scale = 0.5, int targetFps = 60)
+        public ScreenCapturer(int quality = 100, double scale = 1.0, int targetFps = 120)
         {
             _quality = Math.Clamp(quality, 10, 100);
             _scale = Math.Clamp(scale, 0.1, 1.0);
@@ -220,14 +220,6 @@ namespace RemoteDesktopClient.Services
                         {
                             capturedBitmap = _windowsGraphicsCapturer.TryGetFrame(targetWidth, targetHeight);
                             ownsCapturedBitmap = capturedBitmap != null;
-                            if (capturedBitmap == null)
-                            {
-                                return (
-                                    null,
-                                    (ushort)originalWidth,
-                                    (ushort)originalHeight,
-                                    0);
-                            }
                         }
                         catch
                         {
@@ -236,10 +228,19 @@ namespace RemoteDesktopClient.Services
                         }
                     }
 
-                    capturedBitmap ??= CaptureScreen(
-                        screenBounds,
-                        targetWidth,
-                        targetHeight);
+                    if (capturedBitmap == null)
+                    {
+                        bool needKeyframe = _previousTileHashes == null || _appliedCaptureVersion != captureVersion;
+                        if (needKeyframe)
+                        {
+                            capturedBitmap = CaptureScreen(screenBounds, targetWidth, targetHeight);
+                            ownsCapturedBitmap = false;
+                        }
+                        else
+                        {
+                            return (null, (ushort)originalWidth, (ushort)originalHeight, 0);
+                        }
+                    }
 
                     try
                     {

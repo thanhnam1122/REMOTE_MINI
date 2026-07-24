@@ -59,6 +59,15 @@ namespace RemoteDesktopClient.Services
                 _captureItem.Size);
             _captureSession = _framePool.CreateCaptureSession(_captureItem);
             _captureSession.IsCursorCaptureEnabled = true;
+            try
+            {
+                var prop = _captureSession.GetType().GetProperty("IsBorderRequired");
+                if (prop != null && prop.CanWrite)
+                {
+                    prop.SetValue(_captureSession, false);
+                }
+            }
+            catch { }
             _captureSession.StartCapture();
         }
 
