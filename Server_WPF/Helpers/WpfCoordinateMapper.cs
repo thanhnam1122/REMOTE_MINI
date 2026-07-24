@@ -8,10 +8,18 @@ namespace RemoteDesktopServer.Helpers
         public static (bool IsValid, float NormX, float NormY) GetNormalizedCoordinates(
             double mouseX, double mouseY,
             double containerWidth, double containerHeight,
-            double imageSourceWidth, double imageSourceHeight)
+            double imageSourceWidth, double imageSourceHeight,
+            bool isFill = false)
         {
-            if (containerWidth <= 0 || containerHeight <= 0 || imageSourceWidth <= 0 || imageSourceHeight <= 0)
+            if (containerWidth <= 0 || containerHeight <= 0)
                 return (false, 0f, 0f);
+
+            if (isFill || imageSourceWidth <= 0 || imageSourceHeight <= 0)
+            {
+                float fillX = (float)Math.Clamp(mouseX / containerWidth, 0.0, 1.0);
+                float fillY = (float)Math.Clamp(mouseY / containerHeight, 0.0, 1.0);
+                return (true, fillX, fillY);
+            }
 
             double aspectSource = imageSourceWidth / imageSourceHeight;
             double aspectContainer = containerWidth / containerHeight;

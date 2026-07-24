@@ -421,6 +421,7 @@ namespace RemoteDesktopServer
                     viewportBorder.CornerRadius = new CornerRadius(0);
                     viewportBorder.BorderThickness = new Thickness(0);
                 }
+                if (imgViewport != null) imgViewport.Stretch = System.Windows.Media.Stretch.Fill;
                 if (pnlFloatingBar != null) pnlFloatingBar.Visibility = Visibility.Visible;
 
                 _isFullscreen = true;
@@ -430,6 +431,7 @@ namespace RemoteDesktopServer
             }
             else
             {
+                if (imgViewport != null) imgViewport.Stretch = System.Windows.Media.Stretch.Uniform;
                 this.WindowStyle = _prevWindowStyle;
                 this.WindowState = _prevWindowState;
                 this.ResizeMode = _prevResizeMode;
@@ -511,11 +513,14 @@ namespace RemoteDesktopServer
             if ((DateTime.Now - _lastMouseMoveTime).TotalMilliseconds < 20) return;
             _lastMouseMoveTime = DateTime.Now;
 
+            bool isFill = imgViewport.Stretch == System.Windows.Media.Stretch.Fill;
+
             Point pos = e.GetPosition(imgViewport);
             var (isValid, normX, normY) = WpfCoordinateMapper.GetNormalizedCoordinates(
                 pos.X, pos.Y,
                 imgViewport.ActualWidth, imgViewport.ActualHeight,
-                _remoteWidth, _remoteHeight
+                _remoteWidth, _remoteHeight,
+                isFill
             );
 
             if (isValid)
@@ -529,11 +534,13 @@ namespace RemoteDesktopServer
             if (!_serverService.IsClientConnected) return;
             viewportBorder.Focus();
 
+            bool isFill = imgViewport.Stretch == System.Windows.Media.Stretch.Fill;
             Point pos = e.GetPosition(imgViewport);
             var (isValid, normX, normY) = WpfCoordinateMapper.GetNormalizedCoordinates(
                 pos.X, pos.Y,
                 imgViewport.ActualWidth, imgViewport.ActualHeight,
-                _remoteWidth, _remoteHeight
+                _remoteWidth, _remoteHeight,
+                isFill
             );
 
             if (!isValid) return;
@@ -553,11 +560,13 @@ namespace RemoteDesktopServer
         {
             if (!_serverService.IsClientConnected) return;
 
+            bool isFill = imgViewport.Stretch == System.Windows.Media.Stretch.Fill;
             Point pos = e.GetPosition(imgViewport);
             var (isValid, normX, normY) = WpfCoordinateMapper.GetNormalizedCoordinates(
                 pos.X, pos.Y,
                 imgViewport.ActualWidth, imgViewport.ActualHeight,
-                _remoteWidth, _remoteHeight
+                _remoteWidth, _remoteHeight,
+                isFill
             );
 
             if (!isValid) return;
@@ -576,11 +585,13 @@ namespace RemoteDesktopServer
         {
             if (!_serverService.IsClientConnected) return;
 
+            bool isFill = imgViewport.Stretch == System.Windows.Media.Stretch.Fill;
             Point pos = e.GetPosition(imgViewport);
             var (isValid, normX, normY) = WpfCoordinateMapper.GetNormalizedCoordinates(
                 pos.X, pos.Y,
                 imgViewport.ActualWidth, imgViewport.ActualHeight,
-                _remoteWidth, _remoteHeight
+                _remoteWidth, _remoteHeight,
+                isFill
             );
 
             if (!isValid) return;
