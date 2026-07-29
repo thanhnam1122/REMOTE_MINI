@@ -26,6 +26,21 @@ namespace RemoteDesktopClient.Services
         [DllImport("user32.dll")]
         private static extern IntPtr MonitorFromPoint(NativePoint point, uint flags);
 
+        [DllImport("combase.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        private static extern int WindowsCreateString(
+            [MarshalAs(UnmanagedType.LPWStr)] string sourceString,
+            int length,
+            out IntPtr hstring);
+
+        [DllImport("combase.dll", ExactSpelling = true)]
+        private static extern int WindowsDeleteString(IntPtr hstring);
+
+        [DllImport("combase.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        private static extern int RoGetActivationFactory(
+            IntPtr hstrRuntimeClass,
+            ref Guid iid,
+            out IntPtr factory);
+
         private const uint MonitorDefaultToPrimary = 1;
         private const string GraphicsCaptureItemRuntimeClass = "Windows.Graphics.Capture.GraphicsCaptureItem";
 
@@ -197,16 +212,15 @@ namespace RemoteDesktopClient.Services
             if (monitor == IntPtr.Zero)
                 throw new InvalidOperationException("Không tìm thấy màn hình chính.");
 
-            using IObjectReference factory = ActivationFactory.Get(GraphicsCaptureItemRuntimeClass);
-            IntPtr interopPointer = IntPtr.Zero;
+            int hr = WindowsCreateString(GraphicsCaptureItemRuntimeClass, GraphicsCaptureItemRuntimeClass.Length, out IntPtr hstring);
+            Marshal.ThrowExceptionForHR(hr);
 
+            IntPtr interopPointer = IntPtr.Zero;
             try
             {
                 Guid interopId = GraphicsCaptureItemInteropId;
-                Marshal.ThrowExceptionForHR(Marshal.QueryInterface(
-                    factory.ThisPtr,
-                    ref interopId,
-                    out interopPointer));
+                hr = RoGetActivationFactory(hstring, ref interopId, out interopPointer);
+                Marshal.ThrowExceptionForHR(hr);
 
                 IntPtr vtable = Marshal.ReadIntPtr(interopPointer);
                 IntPtr methodPointer = Marshal.ReadIntPtr(vtable, IntPtr.Size * 4);
@@ -234,6 +248,8 @@ namespace RemoteDesktopClient.Services
             {
                 if (interopPointer != IntPtr.Zero)
                     Marshal.Release(interopPointer);
+
+                WindowsDeleteString(hstring);
             }
         }
 
